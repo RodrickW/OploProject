@@ -343,8 +343,27 @@ export default function Layout({ children, currentPageName }) {
         <SidebarContent />
       </div>
 
+      {/* Mobile Top Header (visible only below lg breakpoint) */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200 flex items-center justify-between px-4 h-14">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="p-2 rounded-xl text-gray-600 hover:bg-gray-100 transition"
+          data-testid="button-mobile-menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <Link to={createPageUrl('Dashboard')} className="flex items-center gap-2">
+          <svg width="28" height="28" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="40" width="75" height="130" rx="18" transform="rotate(-20 60 105)" fill="#7B8CFF"/>
+            <rect x="90" y="30" width="75" height="130" rx="18" transform="rotate(20 127 95)" fill="#9EAFFF"/>
+          </svg>
+          <span className="text-base font-bold text-gray-900">Oplo.ai</span>
+        </Link>
+        <LanguageSelector />
+      </div>
+
       {/* Onboarding Banner */}
-      <div className={cn("fixed top-0 right-0 z-30 transition-all duration-300", collapsed ? "lg:left-20" : "lg:left-64", "left-0")}>
+      <div className={cn("fixed z-30 transition-all duration-300 right-0", collapsed ? "lg:left-20" : "lg:left-64", "left-0 top-14 lg:top-0")}>
         <OnboardingBanner />
       </div>
 
@@ -352,7 +371,8 @@ export default function Layout({ children, currentPageName }) {
       <div className={cn(
         "transition-all duration-300 min-h-screen",
         collapsed ? "lg:pl-20" : "lg:pl-64",
-        "pb-20 lg:pb-0"
+        "pb-20 lg:pb-0",
+        "pt-14 lg:pt-0"
       )}>
         <main className="p-4 lg:p-8 overflow-y-auto">
           <AnimatePresence mode="wait">

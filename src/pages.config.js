@@ -59,6 +59,7 @@ import Devs from './pages/Devs';
 import Help from './pages/Help';
 import Home from './pages/Home';
 import Insights from './pages/Insights';
+import Inventory from './pages/Inventory';
 import IntegrationsOplo from './pages/IntegrationsOplo';
 import KnowledgeBase from './pages/KnowledgeBase';
 import Market from './pages/Market';
@@ -95,6 +96,7 @@ export const PAGES = {
     "Help": Help,
     "Home": Home,
     "Insights": Insights,
+    "Inventory": Inventory,
     "IntegrationsOplo": IntegrationsOplo,
     "KnowledgeBase": KnowledgeBase,
     "Market": Market,

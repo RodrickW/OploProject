@@ -28,14 +28,15 @@ import {
   Menu,
   X,
   Sparkles,
-  Plug
+  Plug,
+  Boxes
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
 import { translations } from '@/lib/translations';
 
 const MARKETING_PAGES = ['Home', 'AboutOplo', 'PricingPage', 'QuoteQualification', 'Careers', 'TeamAsAService', 'Contact', 'Affiliates', 'Partners', 'University', 'Search', 'Devs'];
-const APP_PAGES = ['Dashboard', 'OploChat', 'Insights', 'CustomerSuccess', 'Operations', 'Market', 'Product', 'Alignment', 'Sales', 'Team', 'Settings', 'Notifications', 'Help', 'Profile', 'IntegrationsOplo', 'Restaurants', 'RestaurantDetail'];
+const APP_PAGES = ['Dashboard', 'OploChat', 'Insights', 'Inventory', 'CustomerSuccess', 'Operations', 'Market', 'Product', 'Alignment', 'Sales', 'Team', 'Settings', 'Notifications', 'Help', 'Profile', 'IntegrationsOplo', 'Restaurants', 'RestaurantDetail'];
 
 function OnboardingGuard() {
   return null;
@@ -52,6 +53,7 @@ export default function Layout({ children, currentPageName }) {
     { name: t.nav.dashboard, icon: LayoutDashboard, page: 'Dashboard' },
     { name: t.nav.oploAI, icon: Sparkles, page: 'OploChat', highlight: true },
     { name: t.nav.insights, icon: Lightbulb, page: 'Insights' },
+    { name: t.nav.inventory, icon: Boxes, page: 'Inventory' },
   ];
 
   const compastNav = [

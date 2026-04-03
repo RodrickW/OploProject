@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import entityRoutes from './routes/entities.js';
+import inventoryRoutes from './routes/inventory.js';
+import supplierRoutes from './routes/suppliers.js';
 
 const app = express();
 const PORT = process.env.API_PORT || 3001;
@@ -13,6 +15,8 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Dat
 
 app.use('/api/auth', authRoutes);
 app.use('/api/entities', entityRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/suppliers', supplierRoutes);
 
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);

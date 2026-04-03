@@ -22,6 +22,7 @@ export const translations = {
       help: 'Aide',
       profile: 'Profil',
       collapse: 'Réduire',
+      inventory: 'Inventaire',
     },
 
     // Navbar
@@ -202,6 +203,7 @@ export const translations = {
       help: 'Help',
       profile: 'Profile',
       collapse: 'Collapse',
+      inventory: 'Inventory',
     },
 
     // Navbar

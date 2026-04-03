@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ChevronDown, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import LanguageSelector from '@/components/LanguageSelector';
+import { useLanguage } from '@/lib/LanguageContext';
+import { translations } from '@/lib/translations';
 
 export default function Navbar() {
   const [isSolutionsOpen, setIsSolutionsOpen] = React.useState(false);
@@ -13,31 +15,33 @@ export default function Navbar() {
   const [isRessourcesOpen, setIsRessourcesOpen] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const { language } = useLanguage();
+  const t = translations[language] || translations.fr;
 
   const solutions = [
     {
       id: 'general_managers',
-      title: 'Directeurs Généraux',
+      title: t.navbar.solutions_list.generalManagers,
       icon: '🎯',
-      description: 'Pilotage global du groupe',
+      description: t.navbar.solutions_list.generalManagersDesc,
     },
     {
       id: 'revenue_managers',
-      title: 'Revenue Managers',
+      title: t.navbar.solutions_list.revenueManagers,
       icon: '💰',
-      description: 'Optimisation du CA',
+      description: t.navbar.solutions_list.revenueManagersDesc,
     },
     {
       id: 'it_managers',
-      title: 'Responsables IT',
+      title: t.navbar.solutions_list.itManagers,
       icon: '⚙️',
-      description: 'Infrastructure & intégrations',
+      description: t.navbar.solutions_list.itManagersDesc,
     },
     {
       id: 'fb_managers',
-      title: 'Responsables F&B',
+      title: t.navbar.solutions_list.fbManagers,
       icon: '🍽️',
-      description: 'Pilotage opérationnel',
+      description: t.navbar.solutions_list.fbManagersDesc,
     }
   ];
 
@@ -138,7 +142,7 @@ export default function Navbar() {
                   {/* Produits */}
                   <div>
                     <div className="rounded-lg border border-gray-200 p-4 bg-gray-50 shadow-sm mb-4">
-                      <h4 className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">Produits</h4>
+                      <h4 className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">{t.navbar.products}</h4>
                       <div className="space-y-2">
                         {[
                           { name: "Gestion hôtelière (PMS)", icon: "🏨", page: "Solutions" },
@@ -165,7 +169,7 @@ export default function Navbar() {
                     </div>
 
                     <div className="rounded-lg border border-gray-200 p-4 bg-gray-50 shadow-sm">
-                      <h4 className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">Intégrations</h4>
+                      <h4 className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">{t.navbar.platform}</h4>
                       <div className="space-y-2">
                         {[
                           { name: "Marketplace", icon: "🏪", page: "IntegrationsOplo" },
@@ -191,7 +195,7 @@ export default function Navbar() {
                     </div>
                   </div>
 
-                  {/* Vue d'ensemble */}
+                  {/* {t.navbar.overview} */}
                   <div className="rounded-lg border border-gray-200 p-4 bg-gray-50 shadow-sm">
                     <h4 className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">Vue d'ensemble</h4>
                     <motion.div
@@ -201,8 +205,8 @@ export default function Navbar() {
                       className="rounded-lg border border-gray-200 p-4 bg-gray-50"
                     >
                       <div className="text-lg font-bold text-gray-900 mb-2">Oplo.ai PMS</div>
-                      <p className="text-xs text-gray-600 mb-3 leading-relaxed">Découvrez la puissance et le potentiel de notre système de gestion hôtelière primé</p>
-                      <h5 className="text-xs font-bold text-gray-700 mb-4">Fonctionnalités</h5>
+                      <p className="text-xs text-gray-600 mb-3 leading-relaxed">{t.navbar.pmsDesc}</p>
+                      <h5 className="text-xs font-bold text-gray-700 mb-4">{t.navbar.features}</h5>
                       <div className="grid grid-cols-2 gap-3">
                         {[
                           { name: "StaffFlow", icon: "📅", url: "https://staff-kitchen-flow.base44.app/Home" },
@@ -271,7 +275,7 @@ export default function Navbar() {
                 <div className="grid grid-cols-2 gap-6">
                   {/* Explorer */}
                   <div className="rounded-lg border border-gray-200 p-4 bg-gray-50 shadow-sm">
-                    <h4 className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">Explorer</h4>
+                    <h4 className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">{t.navbar.explore}</h4>
                     <div className="space-y-2">
                       {[
                         { name: "Blog", icon: "📝" },
@@ -316,7 +320,7 @@ export default function Navbar() {
                   {/* Entreprise */}
                   <div className="space-y-3">
                     <div className="rounded-lg border border-gray-200 p-3 bg-gray-50 shadow-sm">
-                      <h4 className="text-xs font-bold text-gray-600 mb-2 uppercase tracking-wide">Entreprise</h4>
+                      <h4 className="text-xs font-bold text-gray-600 mb-2 uppercase tracking-wide">{t.navbar.company}</h4>
                       <div className="space-y-1.5">
                         {[
                           { name: "À propos", icon: "ℹ️", page: "AboutOplo" },
@@ -373,7 +377,7 @@ export default function Navbar() {
                       }}
                       className="flex items-center justify-between px-3 py-2.5 text-sm text-gray-700 hover:text-blue-600 transition cursor-pointer group"
                     >
-                      <span className="font-medium">Découvrez la plateforme</span>
+                      <span className="font-medium">{t.navbar.discoverPlatform}</span>
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
                     </motion.a>
                   </div>

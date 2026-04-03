@@ -29,9 +29,13 @@ import EnrichDataCTA from '@/components/dashboard/EnrichDataCTA';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatePresence } from 'framer-motion';
+import { useLanguage } from '@/lib/LanguageContext';
+import { translations } from '@/lib/translations';
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
+  const { language } = useLanguage();
+  const t = translations[language] || translations.fr;
 
   const { data: currentUser } = useQuery({
     queryKey: ['me'],
@@ -145,10 +149,10 @@ export default function Dashboard() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-            {metrics.groupName ? `${metrics.groupName}` : 'Tableau de bord'}
+            {metrics.groupName ? `${metrics.groupName}` : t.dashboard.title}
           </h1>
           <p className="text-gray-500 mt-1">
-            Vue d'ensemble de vos {metrics.groupName ? nbRestaurants : (allRestaurants.length || '...')} restaurants
+            {t.dashboard.subtitle} {metrics.groupName ? nbRestaurants : (allRestaurants.length || '...')} {t.dashboard.restaurants}
             {metrics.countries ? ` · ${metrics.countries}` : ''}
           </p>
         </div>
@@ -156,7 +160,7 @@ export default function Dashboard() {
           <Link to={createPageUrl('OploChat')}>
             <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
               <Sparkles className="w-4 h-4" />
-              Demander à Oplo.ai
+              {t.dashboard.askOplo}
             </Button>
           </Link>
         </div>
@@ -165,41 +169,41 @@ export default function Dashboard() {
       {/* Key Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <MetricCard
-          title="CA mensuel estimé"
+          title={t.dashboard.metrics.monthlyRevenue}
           value={metrics.totalRevenue > 0 ? metrics.totalRevenue : '—'}
           valuePrefix={metrics.totalRevenue > 0 ? "€" : ""}
-          changeLabel={metrics.totalRevenue > 0 ? `${nbRestaurants} restaurant(s)` : "Complétez l'onboarding"}
+          changeLabel={metrics.totalRevenue > 0 ? `${nbRestaurants} restaurant(s)` : t.dashboard.metrics.completeOnboarding}
           icon={Euro}
         />
         <MetricCard
-          title="Couverts / jour"
+          title={t.dashboard.metrics.coversPerDay}
           value={metrics.avgCoversPerDay > 0 ? metrics.avgCoversPerDay * nbRestaurants : '—'}
-          changeLabel={metrics.avgCoversPerDay > 0 ? `moy. ${metrics.avgCoversPerDay}/resto` : "Non renseigné"}
+          changeLabel={metrics.avgCoversPerDay > 0 ? `${t.dashboard.metrics.avgPerResto} ${metrics.avgCoversPerDay}/resto` : t.dashboard.metrics.notProvided}
           icon={Users}
         />
         <MetricCard
-          title="Ticket moyen"
+          title={t.dashboard.metrics.averageTicket}
           value={metrics.averageTicket > 0 ? metrics.averageTicket : '—'}
           valuePrefix={metrics.averageTicket > 0 ? "€" : ""}
-          changeLabel={metrics.averageTicket > 0 ? "Par couvert" : "Non renseigné"}
+          changeLabel={metrics.averageTicket > 0 ? t.dashboard.metrics.perCover : t.dashboard.metrics.notProvided}
           icon={ShoppingCart}
         />
         <MetricCard
-          title="Clients / mois"
+          title={t.dashboard.metrics.customersPerMonth}
           value={metrics.totalCustomers > 0 ? metrics.totalCustomers : '—'}
-          changeLabel={metrics.totalCustomers > 0 ? "Estimation groupe" : "Non renseigné"}
+          changeLabel={metrics.totalCustomers > 0 ? t.dashboard.metrics.groupEstimate : t.dashboard.metrics.notProvided}
           icon={Percent}
         />
         <MetricCard
-          title="Équipe totale"
+          title={t.dashboard.metrics.totalStaff}
           value={metrics.totalEmployees > 0 ? metrics.totalEmployees : '—'}
-          changeLabel={metrics.totalEmployees > 0 ? "Employés" : "Non renseigné"}
+          changeLabel={metrics.totalEmployees > 0 ? t.dashboard.metrics.employees : t.dashboard.metrics.notProvided}
           icon={TrendingUp}
         />
         <MetricCard
-          title="Restaurants"
+          title={t.dashboard.metrics.restaurants}
           value={nbRestaurants}
-          changeLabel={metrics.countries || "Groupe"}
+          changeLabel={metrics.countries || t.dashboard.metrics.group}
           icon={Clock}
         />
       </div>
@@ -222,7 +226,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-blue-600" />
-              <h3 className="font-semibold text-gray-900">Smart Insights</h3>
+              <h3 className="font-semibold text-gray-900">{t.dashboard.insights.title}</h3>
             </div>
             <Link to={createPageUrl('Insights')}>
               <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-900">
@@ -240,8 +244,8 @@ export default function Dashboard() {
           ) : insights.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Sparkles className="w-10 h-10 mx-auto mb-3 opacity-50" />
-              <p>Aucun insight pour le moment</p>
-              <p className="text-sm mt-1">Les insights apparaîtront ici automatiquement</p>
+              <p>{t.dashboard.insights.noInsights}</p>
+              <p className="text-sm mt-1">{t.dashboard.insights.insightsAppear}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -257,7 +261,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Store className="w-5 h-5 text-cyan-600" />
-              <h3 className="font-semibold text-gray-900">Mes restaurants</h3>
+              <h3 className="font-semibold text-gray-900">{t.dashboard.myRestaurants}</h3>
             </div>
             <Link to={createPageUrl('Restaurants')}>
               <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-900">
@@ -275,9 +279,9 @@ export default function Dashboard() {
           ) : allRestaurants.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Store className="w-10 h-10 mx-auto mb-3 opacity-50" />
-              <p>Aucun restaurant ajouté</p>
+              <p>{t.dashboard.noRestaurants}</p>
               <Link to={createPageUrl('Restaurants')}>
-                <Button className="mt-3" size="sm">Ajouter un restaurant</Button>
+                <Button className="mt-3" size="sm">{t.dashboard.addRestaurant}</Button>
               </Link>
             </div>
           ) : (
@@ -311,10 +315,10 @@ export default function Dashboard() {
         
         {/* Profil opérationnel depuis onboarding */}
         <div className="lg:col-span-2 rounded-2xl bg-white border border-gray-200 p-5">
-          <h3 className="text-sm font-medium text-gray-600 mb-4">Profil opérationnel</h3>
+          <h3 className="text-sm font-medium text-gray-600 mb-4">{t.dashboard.operationalProfile}</h3>
           {!profile ? (
             <div className="text-center py-8 text-gray-400">
-              <p className="text-sm">Complétez l'onboarding pour voir vos données ici</p>
+              <p className="text-sm">{t.dashboard.completeOnboardingPrompt}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -337,12 +341,12 @@ export default function Dashboard() {
               {/* Répartition équipe */}
               {profile.kitchen_staff_pct && (
                 <div>
-                  <h4 className="text-xs text-gray-500 mb-2">Répartition équipe ({metrics.totalEmployees} pers.)</h4>
+                  <h4 className="text-xs text-gray-500 mb-2">{t.dashboard.teamDistribution} ({metrics.totalEmployees} {t.dashboard.people})</h4>
                   <div className="space-y-1.5">
                     {[
-                      { name: 'Cuisine', pct: profile.kitchen_staff_pct, color: 'bg-amber-500' },
-                      { name: 'Salle', pct: profile.floor_staff_pct, color: 'bg-blue-500' },
-                      { name: 'Management', pct: profile.manager_staff_pct, color: 'bg-purple-500' },
+                      { name: t.dashboard.kitchen, pct: profile.kitchen_staff_pct, color: 'bg-amber-500' },
+                      { name: t.dashboard.floor, pct: profile.floor_staff_pct, color: 'bg-blue-500' },
+                      { name: t.dashboard.management, pct: profile.manager_staff_pct, color: 'bg-purple-500' },
                     ].filter(s => s.pct > 0).map(segment => (
                       <div key={segment.name} className="flex items-center gap-2">
                         <span className="text-xs text-gray-600 w-20">{segment.name}</span>
@@ -359,7 +363,7 @@ export default function Dashboard() {
               {/* Objectifs */}
               {metrics.mainObjectives.length > 0 && (
                 <div>
-                  <h4 className="text-xs text-gray-500 mb-2">Objectifs principaux</h4>
+                  <h4 className="text-xs text-gray-500 mb-2">{t.dashboard.mainObjectives}</h4>
                   <div className="flex flex-wrap gap-1.5">
                     {metrics.mainObjectives.map((obj, i) => (
                       <span key={i} className="text-xs px-2 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-700">{obj}</span>
@@ -371,7 +375,7 @@ export default function Dashboard() {
               {/* Best sellers */}
               {metrics.bestSellers && (
                 <div>
-                  <h4 className="text-xs text-gray-500 mb-1">Best-sellers déclarés</h4>
+                  <h4 className="text-xs text-gray-500 mb-1">{t.dashboard.bestSellers}</h4>
                   <p className="text-sm text-gray-700">{metrics.bestSellers}</p>
                 </div>
               )}
@@ -379,7 +383,7 @@ export default function Dashboard() {
               {/* Plateformes livraison */}
               {metrics.deliveryPlatforms && (
                 <div>
-                  <h4 className="text-xs text-gray-500 mb-1">Plateformes livraison</h4>
+                  <h4 className="text-xs text-gray-500 mb-1">{t.dashboard.deliveryPlatforms}</h4>
                   <p className="text-sm text-gray-700">{metrics.deliveryPlatforms}</p>
                 </div>
               )}

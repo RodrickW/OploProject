@@ -31,35 +31,8 @@ import {
   Plug
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const navigation = [
-  { name: 'Dashboard', icon: LayoutDashboard, page: 'Dashboard' },
-  { name: 'Oplo.ai', icon: Sparkles, page: 'OploChat', highlight: true },
-  { name: 'Insights', icon: Lightbulb, page: 'Insights' },
-];
-
-const compastNav = [
-  { name: 'Customer Success', icon: Users, page: 'CustomerSuccess', letter: 'C' },
-  { name: 'Operations', icon: SettingsIcon, page: 'Operations', letter: 'O' },
-  { name: 'Market', icon: Compass, page: 'Market', letter: 'M' },
-  { name: 'Product/Service', icon: ShoppingBag, page: 'Product', letter: 'P' },
-  { name: 'Alignment', icon: Target, page: 'Alignment', letter: 'A' },
-  { name: 'Sales', icon: TrendingUp, page: 'Sales', letter: 'S' },
-  { name: 'Team', icon: UsersRound, page: 'Team', letter: 'T' },
-];
-
-const integrationsNav = [
-  { name: 'Intégrations Oplo', icon: Plug, page: 'IntegrationsOplo' },
-];
-
-const bottomNav = [
-  { name: 'Gestion Utilisateurs', icon: Users, page: 'AdminUsers', adminOnly: true },
-  { name: 'Gestion d\'équipe', icon: Users, page: 'TeamManagement', hideForAdmin: true },
-  { name: 'Paramètres', icon: SettingsIcon, page: 'Settings' },
-  { name: 'Notifications', icon: Bell, page: 'Notifications' },
-  { name: 'Aide', icon: HelpCircle, page: 'Help' },
-  { name: 'Profil', icon: UserCircle, page: 'Profile' },
-];
+import { useLanguage } from '@/lib/LanguageContext';
+import { translations } from '@/lib/translations';
 
 const MARKETING_PAGES = ['Home', 'AboutOplo', 'PricingPage', 'QuoteQualification', 'Careers', 'TeamAsAService', 'Contact', 'Affiliates', 'Partners', 'University', 'Search', 'Devs'];
 const APP_PAGES = ['Dashboard', 'OploChat', 'Insights', 'CustomerSuccess', 'Operations', 'Market', 'Product', 'Alignment', 'Sales', 'Team', 'Settings', 'Notifications', 'Help', 'Profile', 'IntegrationsOplo', 'Restaurants', 'RestaurantDetail'];
@@ -72,6 +45,37 @@ export default function Layout({ children, currentPageName }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { language } = useLanguage();
+  const t = translations[language] || translations.fr;
+
+  const navigation = [
+    { name: t.nav.dashboard, icon: LayoutDashboard, page: 'Dashboard' },
+    { name: t.nav.oploAI, icon: Sparkles, page: 'OploChat', highlight: true },
+    { name: t.nav.insights, icon: Lightbulb, page: 'Insights' },
+  ];
+
+  const compastNav = [
+    { name: t.nav.customerSuccess, icon: Users, page: 'CustomerSuccess', letter: 'C' },
+    { name: t.nav.operations, icon: SettingsIcon, page: 'Operations', letter: 'O' },
+    { name: t.nav.market, icon: Compass, page: 'Market', letter: 'M' },
+    { name: t.nav.productService, icon: ShoppingBag, page: 'Product', letter: 'P' },
+    { name: t.nav.alignment, icon: Target, page: 'Alignment', letter: 'A' },
+    { name: t.nav.sales, icon: TrendingUp, page: 'Sales', letter: 'S' },
+    { name: t.nav.team, icon: UsersRound, page: 'Team', letter: 'T' },
+  ];
+
+  const integrationsNav = [
+    { name: t.nav.integrations_oplo, icon: Plug, page: 'IntegrationsOplo' },
+  ];
+
+  const bottomNav = [
+    { name: t.nav.userManagement, icon: Users, page: 'AdminUsers', adminOnly: true },
+    { name: t.nav.teamManagement, icon: Users, page: 'TeamManagement', hideForAdmin: true },
+    { name: t.nav.settings, icon: SettingsIcon, page: 'Settings' },
+    { name: t.nav.notifications, icon: Bell, page: 'Notifications' },
+    { name: t.nav.help, icon: HelpCircle, page: 'Help' },
+    { name: t.nav.profile, icon: UserCircle, page: 'Profile' },
+  ];
 
   // Récupérer l'utilisateur actuel pour vérifier le rôle admin
   const { data: currentUser } = useQuery({
@@ -161,7 +165,7 @@ export default function Layout({ children, currentPageName }) {
         <div className="mt-6">
           {!collapsed && (
             <div className="px-3 mb-3">
-              <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">COMPAST Framework</h2>
+              <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t.nav.compastFramework}</h2>
             </div>
             )}
             <div className="space-y-1">
@@ -175,7 +179,7 @@ export default function Layout({ children, currentPageName }) {
             <div className="mt-6">
             {!collapsed && (
             <div className="px-3 mb-3">
-              <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Intégrations</h2>
+              <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t.nav.integrations}</h2>
             </div>
             )}
             <div className="space-y-1">
@@ -206,7 +210,7 @@ export default function Layout({ children, currentPageName }) {
         className="hidden lg:flex mx-3 my-4 items-center justify-center gap-2 px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900 transition-all flex-shrink-0"
       >
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        {!collapsed && <span className="text-xs">Réduire</span>}
+        {!collapsed && <span className="text-xs">{t.nav.collapse}</span>}
       </button>
     </div>
   );

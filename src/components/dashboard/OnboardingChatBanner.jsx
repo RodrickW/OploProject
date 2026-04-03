@@ -4,8 +4,13 @@ import { createPageUrl } from '@/utils';
 import { Sparkles, ArrowRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { useLanguage } from '@/lib/LanguageContext';
+import { translations } from '@/lib/translations';
 
 export default function OnboardingChatBanner({ onDismiss }) {
+  const { language } = useLanguage();
+  const t = translations[language] || translations.fr;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -17,16 +22,16 @@ export default function OnboardingChatBanner({ onDismiss }) {
           <Sparkles className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h3 className="font-bold text-white">Finalisez votre onboarding avec Oplo.ai</h3>
+          <h3 className="font-bold text-white">{t.onboardingChatBanner.title}</h3>
           <p className="text-blue-100 text-sm mt-0.5">
-            Répondez à quelques questions pour personnaliser votre tableau de bord avec vos vraies données.
+            {t.onboardingChatBanner.subtitle}
           </p>
         </div>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <Link to={createPageUrl('OploChat') + '?onboarding=1'}>
           <Button className="bg-white text-blue-600 hover:bg-blue-50 gap-2 font-semibold">
-            Commencer <ArrowRight className="w-4 h-4" />
+            {t.onboardingChatBanner.cta} <ArrowRight className="w-4 h-4" />
           </Button>
         </Link>
         <button onClick={onDismiss} className="p-1 rounded-lg hover:bg-white/20 transition-colors">

@@ -5,33 +5,29 @@ import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { useLanguage } from '@/lib/LanguageContext';
+import { translations } from '@/lib/translations';
 
-const greetings = [
-  "Bienvenue",
-  "Bonjour",
-  "Ravi de vous voir",
-  "Content de vous revoir",
-  "Heureux de vous retrouver",
-  "Salutations",
-  "Hello"
-];
+const greetingsByLang = {
+  fr: ["Bienvenue", "Bonjour", "Ravi de vous voir", "Content de vous revoir", "Heureux de vous retrouver"],
+  en: ["Welcome", "Hello", "Great to see you", "Good to have you back", "Nice to see you again"],
+};
 
 export default function WelcomeCard() {
   const [isVisible, setIsVisible] = useState(false);
   const [user, setUser] = useState(null);
-  const [greeting, setGreeting] = useState(greetings[0]);
+  const [greeting, setGreeting] = useState('');
+  const { language } = useLanguage();
+  const t = translations[language] || translations.fr;
 
   useEffect(() => {
     const loadUser = async () => {
       try {
         const currentUser = await base44.auth.me();
         setUser(currentUser);
-        
-        // Check if card was closed permanently
         const cardClosed = localStorage.getItem('welcomeCardClosed');
-        
         if (!cardClosed) {
-          // Random greeting
+          const greetings = greetingsByLang[language] || greetingsByLang.fr;
           setGreeting(greetings[Math.floor(Math.random() * greetings.length)]);
           setIsVisible(true);
         }
@@ -39,7 +35,6 @@ export default function WelcomeCard() {
         console.error('Error loading user:', error);
       }
     };
-
     loadUser();
   }, []);
 
@@ -71,7 +66,7 @@ export default function WelcomeCard() {
             {greeting} {user.full_name?.split(' ')[0] || 'Chef'} ! 👋
           </h2>
           <p className="text-blue-100 mb-4">
-            Prêt à optimiser vos opérations aujourd'hui ?
+            {t.welcome.subtitle}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3">
@@ -81,17 +76,17 @@ export default function WelcomeCard() {
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-white mb-1">
-                  Besoin d'aide ?
+                  {t.welcome.needHelp}
                 </h3>
                 <p className="text-sm text-blue-100 mb-3">
-                  Notre assistant IA est disponible 24/7
+                  {t.welcome.assistantAvailable}
                 </p>
                 <Link to={createPageUrl('OploChat')}>
                   <Button
                     size="sm"
                     className="bg-white text-blue-600 hover:bg-blue-50"
                   >
-                    Discuter avec Oplo.ai
+                    {t.welcome.chatWithOplo}
                   </Button>
                 </Link>
               </div>

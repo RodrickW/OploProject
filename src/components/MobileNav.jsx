@@ -4,27 +4,29 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from '../utils';
 import { LayoutDashboard, MessageSquareText, Lightbulb, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/LanguageContext';
+import { translations } from '@/lib/translations';
 
 export default function MobileNav({ currentPageName }) {
+  const { language } = useLanguage();
+  const t = translations[language] || translations.fr;
+
   const navItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, page: 'Dashboard' },
-    { name: 'Chat', icon: MessageSquareText, page: 'OploChat' },
-    { name: 'Insights', icon: Lightbulb, page: 'Insights' },
-    { name: 'Profil', icon: UserCircle, page: 'Profile' },
+    { name: t.mobileNav.dashboard, icon: LayoutDashboard, page: 'Dashboard' },
+    { name: t.mobileNav.chat, icon: MessageSquareText, page: 'OploChat' },
+    { name: t.mobileNav.insights, icon: Lightbulb, page: 'Insights' },
+    { name: t.mobileNav.profile, icon: UserCircle, page: 'Profile' },
   ];
-  
+
   const location = useLocation();
   const lastClickRef = useRef({});
 
   const handleNavClick = (page) => {
     const now = Date.now();
     const lastClick = lastClickRef.current[page] || 0;
-    
-    // If clicking same tab within 300ms, scroll to top
     if (currentPageName === page && now - lastClick < 300) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    
     lastClickRef.current[page] = now;
   };
 

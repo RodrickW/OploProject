@@ -5,6 +5,7 @@ import entityRoutes from './routes/entities.js';
 import inventoryRoutes from './routes/inventory.js';
 import supplierRoutes from './routes/suppliers.js';
 import chatRoutes from './routes/chat.js';
+import callRoutes from './routes/calls.js';
 
 const app = express();
 const PORT = process.env.API_PORT || 3001;
@@ -19,6 +20,7 @@ app.use('/api/entities', entityRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/calls', callRoutes);
 
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);

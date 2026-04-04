@@ -11,7 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Package, Plus, AlertTriangle, CheckCircle, XCircle,
   Truck, ShoppingCart, Phone, Mail, User, RefreshCw,
-  TrendingDown, Euro, Boxes, ClipboardList, Pencil, Trash2
+  TrendingDown, Euro, Boxes, ClipboardList, Pencil, Trash2,
+  PhoneCall, PhoneOff, PhoneMissed, PhoneIncoming, Mic, Loader2, Volume2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -213,6 +214,10 @@ export default function Inventory() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [seeding, setSeeding] = useState(false);
   const [orderQty, setOrderQty] = useState('');
+  const [callModal, setCallModal] = useState(null);
+  const [previewedScript, setPreviewedScript] = useState('');
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [callStatus, setCallStatus] = useState(null);
 
   const { data: items = [], isLoading: loadingItems } = useQuery({
     queryKey: ['/api/inventory'],
@@ -227,6 +232,12 @@ export default function Inventory() {
   const { data: orders = [], isLoading: loadingOrders } = useQuery({
     queryKey: ['/api/inventory/orders'],
     queryFn: () => fetch('/api/inventory/orders').then(r => r.json()),
+  });
+
+  const { data: calls = [], isLoading: loadingCalls } = useQuery({
+    queryKey: ['/api/calls'],
+    queryFn: () => fetch('/api/calls').then(r => r.json()),
+    refetchInterval: 8000,
   });
 
   const createItem = useMutation({
@@ -263,6 +274,52 @@ export default function Inventory() {
     mutationFn: ({ id, qty }) => fetch(`/api/inventory/${id}/order`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quantity_ordered: parseFloat(qty) }) }).then(r => r.json()),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['/api/inventory/orders'] }); setOrderingItem(null); setOrderQty(''); },
   });
+
+  const initiateCall = useMutation({
+    mutationFn: ({ item_id, quantity }) =>
+      fetch('/api/calls/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item_id, quantity, language: lang }),
+      }).then(async r => {
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.message || data.error || 'Call failed');
+        return data;
+      }),
+    onSuccess: (data) => {
+      setCallStatus({ type: 'success', callId: data.id, sid: data.twilio_call_sid });
+      qc.invalidateQueries({ queryKey: ['/api/calls'] });
+    },
+    onError: (err) => {
+      setCallStatus({ type: 'error', message: err.message });
+    },
+  });
+
+  const previewScript = async (item) => {
+    setPreviewLoading(true);
+    setPreviewedScript('');
+    const qty = Math.max((item.par_level || 0) - (item.current_quantity || 0), 1);
+    try {
+      const res = await fetch('/api/calls/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item_id: item.id, quantity: qty, language: lang }),
+      });
+      const data = await res.json();
+      setPreviewedScript(data.script || '');
+    } catch {
+      setPreviewedScript(isEn ? 'Error generating script.' : 'Erreur lors de la génération du script.');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const openCallModal = (item) => {
+    setCallModal(item);
+    setPreviewedScript('');
+    setCallStatus(null);
+    previewScript(item);
+  };
 
   const seedDemoData = async () => {
     setSeeding(true);
@@ -346,6 +403,14 @@ export default function Inventory() {
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="calls" className="gap-2" data-testid="tab-calls">
+            <PhoneCall className="w-4 h-4" />{isEn ? 'AI Calls' : 'Appels IA'}
+            {calls.filter(c => ['initiated', 'ringing', 'in-progress'].includes(c.status)).length > 0 && (
+              <span className="ml-1 bg-green-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                {calls.filter(c => ['initiated', 'ringing', 'in-progress'].includes(c.status)).length}
+              </span>
+            )}
+          </TabsTrigger>
         </TabsList>
 
         {/* ── INVENTORY TAB ── */}
@@ -421,9 +486,16 @@ export default function Inventory() {
                           <td className="px-4 py-4 text-right">
                             <div className="flex items-center justify-end gap-1">
                               {status !== 'ok' && (
-                                <Button size="sm" variant="outline" className="gap-1 text-xs border-indigo-300 text-indigo-600 hover:bg-indigo-50 h-8" onClick={() => { setOrderingItem(item); setOrderQty(String(item.par_level - item.current_quantity)); }} data-testid={`button-order-${item.id}`}>
-                                  <ShoppingCart className="w-3 h-3" />{isEn ? 'Order' : 'Commander'}
-                                </Button>
+                                <>
+                                  <Button size="sm" variant="outline" className="gap-1 text-xs border-indigo-300 text-indigo-600 hover:bg-indigo-50 h-8" onClick={() => { setOrderingItem(item); setOrderQty(String(item.par_level - item.current_quantity)); }} data-testid={`button-order-${item.id}`}>
+                                    <ShoppingCart className="w-3 h-3" />{isEn ? 'Order' : 'Commander'}
+                                  </Button>
+                                  {item.supplier_phone && (
+                                    <Button size="sm" variant="outline" className="gap-1 text-xs border-green-300 text-green-700 hover:bg-green-50 h-8" onClick={() => openCallModal(item)} data-testid={`button-call-${item.id}`}>
+                                      <PhoneCall className="w-3 h-3" />{isEn ? 'Call' : 'Appeler'}
+                                    </Button>
+                                  )}
+                                </>
                               )}
                               <Button size="sm" variant="ghost" className="w-8 h-8 p-0" onClick={() => setItemModal({ mode: 'edit', item })} data-testid={`button-edit-item-${item.id}`}>
                                 <Pencil className="w-3.5 h-3.5 text-gray-500" />
@@ -539,6 +611,101 @@ export default function Inventory() {
             )}
           </div>
         </TabsContent>
+        {/* ── CALLS TAB ── */}
+        <TabsContent value="calls" className="mt-4">
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold text-gray-800">{isEn ? 'AI Supplier Call History' : 'Historique des appels IA fournisseurs'}</h2>
+                <p className="text-xs text-gray-400 mt-0.5">{isEn ? 'Automated calls placed via Twilio + OpenAI' : 'Appels automatisés via Twilio + OpenAI'}</p>
+              </div>
+              {calls.filter(c => ['initiated','ringing','in-progress'].includes(c.status)).length > 0 && (
+                <div className="flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-xl text-sm">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  {isEn ? 'Call in progress' : 'Appel en cours'}
+                </div>
+              )}
+            </div>
+            {loadingCalls ? (
+              <div className="flex items-center justify-center py-16 text-gray-400 gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+              </div>
+            ) : calls.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="w-16 h-16 rounded-2xl bg-green-50 border border-green-100 flex items-center justify-center mx-auto mb-4">
+                  <PhoneCall className="w-8 h-8 text-green-400" />
+                </div>
+                <p className="text-gray-500 font-medium">{isEn ? 'No calls yet' : 'Aucun appel pour le moment'}</p>
+                <p className="text-gray-400 text-sm mt-1 max-w-xs mx-auto">
+                  {isEn
+                    ? 'Click "Call" on any low-stock item to trigger an AI-generated call to your supplier'
+                    : 'Cliquez sur "Appeler" sur un article en stock faible pour déclencher un appel IA vers votre fournisseur'}
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-100">
+                {calls.map(call => {
+                  const isActive = ['initiated','ringing','in-progress'].includes(call.status);
+                  const isComplete = call.status === 'completed';
+                  const isFailed = ['failed','busy','no-answer'].includes(call.status);
+                  return (
+                    <div key={call.id} className="px-6 py-4" data-testid={`row-call-${call.id}`}>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className={cn('p-2 rounded-xl flex-shrink-0',
+                            isActive ? 'bg-green-100' : isComplete ? 'bg-blue-100' : isFailed ? 'bg-red-100' : 'bg-gray-100'
+                          )}>
+                            {isActive ? <Volume2 className="w-4 h-4 text-green-600 animate-pulse" /> :
+                             isComplete ? <PhoneIncoming className="w-4 h-4 text-blue-600" /> :
+                             isFailed ? <PhoneMissed className="w-4 h-4 text-red-500" /> :
+                             <PhoneCall className="w-4 h-4 text-gray-500" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 truncate">{call.item_name}</p>
+                            <p className="text-xs text-gray-400">
+                              {call.supplier_name} · {call.supplier_phone} · {call.quantity_ordered} {call.unit}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <Badge className={cn('text-xs border',
+                            isActive ? 'bg-green-100 text-green-700 border-green-300' :
+                            isComplete ? 'bg-blue-100 text-blue-700 border-blue-300' :
+                            isFailed ? 'bg-red-100 text-red-700 border-red-300' :
+                            'bg-gray-100 text-gray-600 border-gray-300'
+                          )}>
+                            {call.status === 'initiated' ? (isEn ? 'Calling...' : 'Appel...') :
+                             call.status === 'ringing' ? (isEn ? 'Ringing' : 'Sonnerie') :
+                             call.status === 'in-progress' ? (isEn ? 'In progress' : 'En cours') :
+                             call.status === 'completed' ? (isEn ? 'Completed' : 'Terminé') :
+                             call.status === 'failed' ? (isEn ? 'Failed' : 'Échoué') :
+                             call.status === 'busy' ? (isEn ? 'Busy' : 'Occupé') :
+                             call.status === 'no-answer' ? (isEn ? 'No answer' : 'Sans réponse') :
+                             call.status}
+                          </Badge>
+                          <span className="text-xs text-gray-400">
+                            {new Date(call.created_at).toLocaleString(isEn ? 'en-GB' : 'fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {call.duration && (
+                            <span className="text-xs text-gray-400">{call.duration}s</span>
+                          )}
+                        </div>
+                      </div>
+                      {call.call_script && (
+                        <div className="mt-3 ml-11 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                          <p className="text-xs text-gray-400 mb-1 flex items-center gap-1">
+                            <Mic className="w-3 h-3" />{isEn ? 'Script read by AI:' : 'Script lu par l\'IA :'}
+                          </p>
+                          <p className="text-sm text-gray-700 italic">"{call.call_script}"</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </TabsContent>
       </Tabs>
 
       {/* Item Add/Edit Modal */}
@@ -615,6 +782,102 @@ export default function Inventory() {
                   {placeOrder.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
                   {isEn ? 'Confirm Order' : 'Confirmer la commande'}
                 </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── AI CALL MODAL ── */}
+      <Dialog open={!!callModal} onOpenChange={() => { setCallModal(null); setCallStatus(null); setPreviewedScript(''); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-700">
+              <PhoneCall className="w-5 h-5" />
+              {isEn ? 'AI Supplier Call' : 'Appel IA Fournisseur'}
+            </DialogTitle>
+          </DialogHeader>
+          {callModal && (
+            <div className="space-y-4">
+              {/* Item + Supplier info */}
+              <div className="bg-gray-50 rounded-xl p-4 space-y-1.5">
+                <p className="font-semibold text-gray-900 flex items-center gap-2">
+                  <Package className="w-4 h-4 text-indigo-500" />{callModal.name}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {isEn ? 'Supplier' : 'Fournisseur'}: <span className="font-medium text-gray-700">{callModal.supplier_name || '—'}</span>
+                </p>
+                <p className="text-sm text-gray-500">
+                  {isEn ? 'Phone' : 'Téléphone'}: <span className="font-medium text-gray-700">{callModal.supplier_phone}</span>
+                </p>
+                <p className="text-sm text-gray-500">
+                  {isEn ? 'To order' : 'À commander'}: <span className="font-bold text-green-700">
+                    {Math.max((callModal.par_level || 0) - (callModal.current_quantity || 0), 1)} {callModal.unit}
+                  </span>
+                </p>
+              </div>
+
+              {/* AI-generated script */}
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <Mic className="w-4 h-4 text-green-600" />
+                  {isEn ? 'AI-generated call script:' : 'Script d\'appel généré par IA :'}
+                </p>
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 min-h-[80px] flex items-start">
+                  {previewLoading ? (
+                    <div className="flex items-center gap-2 text-green-600 text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {isEn ? 'Generating script with AI...' : 'Génération du script avec l\'IA...'}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-800 italic leading-relaxed">"{previewedScript}"</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Call result feedback */}
+              {callStatus && (
+                <div className={cn('rounded-xl p-3 text-sm flex items-start gap-2',
+                  callStatus.type === 'success' ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'
+                )}>
+                  {callStatus.type === 'success' ? (
+                    <>
+                      <PhoneCall className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-semibold">{isEn ? 'Call initiated!' : 'Appel lancé !'}</p>
+                        <p className="text-xs mt-0.5 opacity-80">{isEn ? 'Twilio is placing the call now. Check the "AI Calls" tab for status.' : 'Twilio passe l\'appel maintenant. Consultez l\'onglet "Appels IA" pour le suivi.'}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <PhoneOff className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-semibold">{isEn ? 'Call failed' : 'Échec de l\'appel'}</p>
+                        <p className="text-xs mt-0.5 opacity-80">{callStatus.message}</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => { setCallModal(null); setCallStatus(null); setPreviewedScript(''); }}>
+                  {callStatus?.type === 'success' ? (isEn ? 'Close' : 'Fermer') : (isEn ? 'Cancel' : 'Annuler')}
+                </Button>
+                {callStatus?.type !== 'success' && (
+                  <Button
+                    onClick={() => initiateCall.mutate({ item_id: callModal.id, quantity: Math.max((callModal.par_level || 0) - (callModal.current_quantity || 0), 1) })}
+                    disabled={initiateCall.isPending || previewLoading}
+                    className="bg-green-600 hover:bg-green-700 gap-2"
+                    data-testid="button-confirm-call"
+                  >
+                    {initiateCall.isPending ? (
+                      <><Loader2 className="w-4 h-4 animate-spin" />{isEn ? 'Calling...' : 'Appel en cours...'}</>
+                    ) : (
+                      <><PhoneCall className="w-4 h-4" />{isEn ? 'Call Supplier Now' : 'Appeler le fournisseur'}</>
+                    )}
+                  </Button>
+                )}
               </DialogFooter>
             </div>
           )}

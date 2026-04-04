@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useLanguage } from '@/lib/LanguageContext';
 import { 
   Settings, 
   User, 
@@ -23,33 +24,32 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function SettingsPage() {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
   const [activeTab, setActiveTab] = useState('group');
 
   const tabs = [
-    { id: 'group', label: 'Mon Groupe', icon: Building2 },
-    { id: 'associates', label: 'Associés', icon: Users },
-    { id: 'general', label: 'Général', icon: Settings },
-    { id: 'account', label: 'Compte', icon: User },
+    { id: 'group', label: isEn ? 'My Group' : 'Mon Groupe', icon: Building2 },
+    { id: 'associates', label: isEn ? 'Associates' : 'Associés', icon: Users },
+    { id: 'general', label: isEn ? 'General' : 'Général', icon: Settings },
+    { id: 'account', label: isEn ? 'Account' : 'Compte', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'security', label: 'Sécurité', icon: Shield },
-    { id: 'billing', label: 'Facturation', icon: CreditCard },
+    { id: 'security', label: isEn ? 'Security' : 'Sécurité', icon: Shield },
+    { id: 'billing', label: isEn ? 'Billing' : 'Facturation', icon: CreditCard },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Paramètres</h1>
-        <p className="text-gray-500 mt-1">Configurez votre espace Oplo.ai</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">{isEn ? 'Settings' : 'Paramètres'}</h1>
+        <p className="text-gray-500 mt-1">{isEn ? 'Configure your Oplo.ai workspace' : 'Configurez votre espace Oplo.ai'}</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-gray-100 border border-gray-200 h-auto flex-wrap gap-1 p-1">
           {tabs.map(tab => (
-            <TabsTrigger 
-              key={tab.id} 
-              value={tab.id}
-              className="data-[state=active]:bg-blue-600 gap-2"
-            >
+            <TabsTrigger key={tab.id} value={tab.id} className="data-[state=active]:bg-blue-600 gap-2">
               <tab.icon className="w-4 h-4" />
               <span className="hidden sm:inline">{tab.label}</span>
             </TabsTrigger>
@@ -58,12 +58,11 @@ export default function SettingsPage() {
 
         <TabsContent value="general" className="space-y-6">
           <div className="rounded-xl bg-white border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Préférences générales</h3>
-            
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{isEn ? 'General preferences' : 'Préférences générales'}</h3>
             <div className="space-y-6">
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="language">Langue</Label>
+                  <Label htmlFor="language">{isEn ? 'Language' : 'Langue'}</Label>
                   <Select defaultValue="fr">
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue />
@@ -74,9 +73,8 @@ export default function SettingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                
                 <div className="space-y-2">
-                  <Label htmlFor="timezone">Fuseau horaire</Label>
+                  <Label htmlFor="timezone">{isEn ? 'Timezone' : 'Fuseau horaire'}</Label>
                   <Select defaultValue="europe_paris">
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue />
@@ -88,10 +86,9 @@ export default function SettingsPage() {
                   </Select>
                 </div>
               </div>
-
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="currency">Devise</Label>
+                  <Label htmlFor="currency">{isEn ? 'Currency' : 'Devise'}</Label>
                   <Select defaultValue="eur">
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue />
@@ -99,13 +96,12 @@ export default function SettingsPage() {
                     <SelectContent>
                       <SelectItem value="eur">Euro (€)</SelectItem>
                       <SelectItem value="usd">Dollar ($)</SelectItem>
-                      <SelectItem value="gbp">Livre (£)</SelectItem>
+                      <SelectItem value="gbp">{isEn ? 'Pound (£)' : 'Livre (£)'}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                
                 <div className="space-y-2">
-                  <Label htmlFor="dateformat">Format de date</Label>
+                  <Label htmlFor="dateformat">{isEn ? 'Date format' : 'Format de date'}</Label>
                   <Select defaultValue="dd_mm_yyyy">
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue />
@@ -122,29 +118,26 @@ export default function SettingsPage() {
           </div>
 
           <div className="rounded-xl bg-white border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Interface</h3>
-            
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{isEn ? 'Interface' : 'Interface'}</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">Mode sombre</p>
-                  <p className="text-sm text-gray-500">Activer le thème sombre</p>
+                  <p className="font-medium text-gray-900">{isEn ? 'Dark mode' : 'Mode sombre'}</p>
+                  <p className="text-sm text-gray-500">{isEn ? 'Enable dark theme' : 'Activer le thème sombre'}</p>
                 </div>
                 <Switch defaultChecked />
               </div>
-              
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">Animations</p>
-                  <p className="text-sm text-gray-500">Activer les animations de l'interface</p>
+                  <p className="font-medium text-gray-900">{isEn ? 'Animations' : 'Animations'}</p>
+                  <p className="text-sm text-gray-500">{isEn ? 'Enable interface animations' : 'Activer les animations de l\'interface'}</p>
                 </div>
                 <Switch defaultChecked />
               </div>
-              
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">Sidebar compacte</p>
-                  <p className="text-sm text-gray-500">Réduire la barre latérale par défaut</p>
+                  <p className="font-medium text-gray-900">{isEn ? 'Compact sidebar' : 'Sidebar compacte'}</p>
+                  <p className="text-sm text-gray-500">{isEn ? 'Reduce sidebar by default' : 'Réduire la barre latérale par défaut'}</p>
                 </div>
                 <Switch />
               </div>
@@ -152,7 +145,7 @@ export default function SettingsPage() {
           </div>
 
           <Button className="bg-blue-600 hover:bg-blue-700">
-            <Save className="w-4 h-4 mr-2" /> Enregistrer les modifications
+            <Save className="w-4 h-4 mr-2" /> {isEn ? 'Save changes' : 'Enregistrer les modifications'}
           </Button>
         </TabsContent>
 
@@ -169,7 +162,7 @@ export default function SettingsPage() {
             <div className="rounded-xl bg-white border border-gray-200 p-12 text-center">
               <tab.icon className="w-16 h-16 mx-auto text-gray-300 mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">{tab.label}</h3>
-              <p className="text-gray-500">Cette section sera bientôt disponible</p>
+              <p className="text-gray-500">{isEn ? 'This section is coming soon' : 'Cette section sera bientôt disponible'}</p>
             </div>
           </TabsContent>
         ))}

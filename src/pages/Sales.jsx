@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '@/lib/LanguageContext';
 import { 
   TrendingUp, 
   Target, 
@@ -13,13 +14,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const subPages = [
-  { id: 'overview', label: 'Overview', icon: TrendingUp },
-  { id: 'leads', label: 'Lead Scoring', icon: Target },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-  { id: 'campaigns', label: 'Campagnes', icon: Megaphone },
-];
-
 const salesData = [
   { month: 'Jan', ventes: 185000, reservations: 2400, takeaway: 45000 },
   { month: 'Fév', ventes: 195000, reservations: 2600, takeaway: 48000 },
@@ -29,15 +23,25 @@ const salesData = [
   { month: 'Juin', ventes: 265000, reservations: 3600, takeaway: 62000 },
 ];
 
-const campaigns = [
-  { name: 'Menu Saint-Valentin', status: 'active', roi: 340, revenue: 45000 },
-  { name: 'Brunch du dimanche', status: 'active', roi: 280, revenue: 32000 },
-  { name: 'Happy Hour', status: 'active', roi: 220, revenue: 18000 },
-  { name: 'Soirée dégustation', status: 'completed', roi: 180, revenue: 25000 },
-];
-
 export default function Sales() {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
   const [activeTab, setActiveTab] = useState('overview');
+
+  const subPages = [
+    { id: 'overview', label: isEn ? 'Overview' : 'Vue d\'ensemble', icon: TrendingUp },
+    { id: 'leads', label: 'Lead Scoring', icon: Target },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+    { id: 'campaigns', label: isEn ? 'Campaigns' : 'Campagnes', icon: Megaphone },
+  ];
+
+  const campaigns = [
+    { name: isEn ? 'Valentine\'s Menu' : 'Menu Saint-Valentin', status: 'active', roi: 340, revenue: 45000 },
+    { name: isEn ? 'Sunday Brunch' : 'Brunch du dimanche', status: 'active', roi: 280, revenue: 32000 },
+    { name: 'Happy Hour', status: 'active', roi: 220, revenue: 18000 },
+    { name: isEn ? 'Tasting Evening' : 'Soirée dégustation', status: 'completed', roi: 180, revenue: 25000 },
+  ];
 
   const stats = {
     totalSales: 3150000,
@@ -49,14 +53,13 @@ export default function Sales() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <div className="p-3 rounded-xl bg-blue-100 border border-blue-300">
           <span className="text-xl font-bold text-blue-600">S</span>
         </div>
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Sales</h1>
-          <p className="text-gray-500">Analysez et boostez vos ventes</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">{isEn ? 'Sales' : 'Ventes'}</h1>
+          <p className="text-gray-500">{isEn ? 'Analyse and grow your sales' : 'Analysez et boostez vos ventes'}</p>
         </div>
       </div>
 
@@ -75,12 +78,11 @@ export default function Sales() {
         </TabsList>
 
         <TabsContent value="overview" className="mt-6 space-y-6">
-          {/* Metrics */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="rounded-xl bg-white border border-gray-200 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Euro className="w-5 h-5 text-blue-600" />
-                <span className="text-sm text-gray-500">CA Total</span>
+                <span className="text-sm text-gray-500">{isEn ? 'Total revenue' : 'CA Total'}</span>
               </div>
               <p className="text-2xl font-bold text-gray-900">€{(stats.totalSales / 1000000).toFixed(2)}M</p>
               <div className="flex items-center gap-1 mt-2 text-emerald-600 text-sm">
@@ -91,16 +93,16 @@ export default function Sales() {
             <div className="rounded-xl bg-white border border-gray-200 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <ShoppingCart className="w-5 h-5 text-cyan-600" />
-                <span className="text-sm text-gray-500">Commandes</span>
+                <span className="text-sm text-gray-500">{isEn ? 'Orders' : 'Commandes'}</span>
               </div>
               <p className="text-2xl font-bold text-gray-900">{stats.totalOrders.toLocaleString()}</p>
-              <p className="text-xs text-gray-500 mt-2">Cette année</p>
+              <p className="text-xs text-gray-500 mt-2">{isEn ? 'This year' : 'Cette année'}</p>
             </div>
             
             <div className="rounded-xl bg-white border border-gray-200 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Euro className="w-5 h-5 text-emerald-600" />
-                <span className="text-sm text-gray-500">Panier moyen</span>
+                <span className="text-sm text-gray-500">{isEn ? 'Avg. basket' : 'Panier moyen'}</span>
               </div>
               <p className="text-2xl font-bold text-gray-900">€{stats.avgOrderValue}</p>
               <div className="flex items-center gap-1 mt-2 text-emerald-600 text-sm">
@@ -111,16 +113,16 @@ export default function Sales() {
             <div className="rounded-xl bg-white border border-gray-200 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Target className="w-5 h-5 text-amber-600" />
-                <span className="text-sm text-gray-500">Conversion</span>
+                <span className="text-sm text-gray-500">{isEn ? 'Conversion' : 'Conversion'}</span>
               </div>
               <p className="text-2xl font-bold text-gray-900">{stats.conversionRate}%</p>
-              <p className="text-xs text-gray-500 mt-2">Visiteurs → Clients</p>
+              <p className="text-xs text-gray-500 mt-2">{isEn ? 'Visitors → Customers' : 'Visiteurs → Clients'}</p>
             </div>
             
             <div className="rounded-xl bg-white border border-gray-200 p-5">
               <div className="flex items-center gap-2 mb-3">
                 <Users className="w-5 h-5 text-blue-600" />
-                <span className="text-sm text-gray-500">Réservations</span>
+                <span className="text-sm text-gray-500">{isEn ? 'Reservations' : 'Réservations'}</span>
               </div>
               <p className="text-2xl font-bold text-gray-900">18.5K</p>
               <div className="flex items-center gap-1 mt-2 text-emerald-600 text-sm">
@@ -129,9 +131,8 @@ export default function Sales() {
             </div>
           </div>
 
-          {/* Sales Chart */}
           <div className="rounded-xl bg-white border border-gray-200 p-5">
-            <h3 className="text-sm font-medium text-gray-600 mb-4">Évolution des ventes</h3>
+            <h3 className="text-sm font-medium text-gray-600 mb-4">{isEn ? 'Sales trend' : 'Évolution des ventes'}</h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={salesData}>
@@ -154,16 +155,15 @@ export default function Sales() {
             </div>
           </div>
 
-          {/* Campaigns */}
           <div className="rounded-xl bg-white border border-gray-200 p-5">
-            <h3 className="text-sm font-medium text-gray-600 mb-4">Campagnes marketing</h3>
+            <h3 className="text-sm font-medium text-gray-600 mb-4">{isEn ? 'Marketing campaigns' : 'Campagnes marketing'}</h3>
             <div className="space-y-3">
               {campaigns.map((campaign, i) => (
                 <div key={i} className="flex items-center gap-4 p-4 rounded-lg bg-gray-50 border border-gray-100">
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">{campaign.name}</p>
                     <Badge className={campaign.status === 'active' ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-600'}>
-                      {campaign.status === 'active' ? 'Active' : 'Terminée'}
+                      {campaign.status === 'active' ? (isEn ? 'Active' : 'Active') : (isEn ? 'Completed' : 'Terminée')}
                     </Badge>
                   </div>
                   <div className="text-right">
@@ -181,7 +181,7 @@ export default function Sales() {
             <div className="rounded-xl bg-white border border-gray-200 p-12 text-center">
               <page.icon className="w-16 h-16 mx-auto text-gray-300 mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">{page.label}</h3>
-              <p className="text-gray-500">Cette section sera bientôt disponible</p>
+              <p className="text-gray-500">{isEn ? 'This section is coming soon' : 'Cette section sera bientôt disponible'}</p>
             </div>
           </TabsContent>
         ))}

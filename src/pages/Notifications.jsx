@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '@/lib/LanguageContext';
 import { 
   Bell, 
   Check, 
@@ -14,45 +15,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-const demoNotifications = [
-  { 
-    id: '1', 
-    type: 'insight', 
-    title: 'Nouvel insight critique', 
-    message: 'Le taux de conversion a chuté de 15% cette semaine au restaurant Le Bistrot',
-    time: 'Il y a 5 min',
-    read: false,
-    priority: 'high'
-  },
-  { 
-    id: '2', 
-    type: 'goal', 
-    title: 'Objectif atteint !', 
-    message: 'Vous avez atteint 90% de votre objectif de chiffre d\'affaires mensuel',
-    time: 'Il y a 1h',
-    read: false,
-    priority: 'medium'
-  },
-  { 
-    id: '3', 
-    type: 'team', 
-    title: 'Nouveau membre', 
-    message: 'Sophie Martin a rejoint l\'équipe de La Belle Assiette',
-    time: 'Il y a 3h',
-    read: true,
-    priority: 'low'
-  },
-  { 
-    id: '4', 
-    type: 'ai', 
-    title: 'Recommandation Oplo.ai', 
-    message: 'Basé sur vos données, nous recommandons d\'augmenter le prix du menu dégustation de 5%',
-    time: 'Hier',
-    read: true,
-    priority: 'medium'
-  },
-];
-
 const typeConfig = {
   insight: { icon: AlertTriangle, color: 'text-amber-600', bg: 'bg-amber-100' },
   goal: { icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-100' },
@@ -61,15 +23,63 @@ const typeConfig = {
 };
 
 export default function Notifications() {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
+  const demoNotifications = [
+    { 
+      id: '1', 
+      type: 'insight', 
+      title: isEn ? 'New critical insight' : 'Nouvel insight critique', 
+      message: isEn
+        ? 'Conversion rate dropped 15% this week at Le Bistrot restaurant'
+        : 'Le taux de conversion a chuté de 15% cette semaine au restaurant Le Bistrot',
+      time: isEn ? '5 min ago' : 'Il y a 5 min',
+      read: false,
+      priority: 'high'
+    },
+    { 
+      id: '2', 
+      type: 'goal', 
+      title: isEn ? 'Goal reached!' : 'Objectif atteint !', 
+      message: isEn
+        ? 'You reached 90% of your monthly revenue goal'
+        : 'Vous avez atteint 90% de votre objectif de chiffre d\'affaires mensuel',
+      time: isEn ? '1h ago' : 'Il y a 1h',
+      read: false,
+      priority: 'medium'
+    },
+    { 
+      id: '3', 
+      type: 'team', 
+      title: isEn ? 'New team member' : 'Nouveau membre', 
+      message: isEn
+        ? 'Sophie Martin joined the La Belle Assiette team'
+        : 'Sophie Martin a rejoint l\'équipe de La Belle Assiette',
+      time: isEn ? '3h ago' : 'Il y a 3h',
+      read: true,
+      priority: 'low'
+    },
+    { 
+      id: '4', 
+      type: 'ai', 
+      title: isEn ? 'Oplo.ai recommendation' : 'Recommandation Oplo.ai', 
+      message: isEn
+        ? 'Based on your data, we recommend raising the tasting menu price by 5%'
+        : 'Basé sur vos données, nous recommandons d\'augmenter le prix du menu dégustation de 5%',
+      time: isEn ? 'Yesterday' : 'Hier',
+      read: true,
+      priority: 'medium'
+    },
+  ];
+
   const [notifications, setNotifications] = useState(demoNotifications);
   const [filter, setFilter] = useState('all');
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAsRead = (id) => {
-    setNotifications(prev => 
-      prev.map(n => n.id === id ? { ...n, read: true } : n)
-    );
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
 
   const markAllAsRead = () => {
@@ -79,6 +89,14 @@ export default function Notifications() {
   const deleteNotification = (id) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
+
+  const filters = [
+    { id: 'all', label: isEn ? 'All' : 'Toutes' },
+    { id: 'unread', label: isEn ? 'Unread' : 'Non lues' },
+    { id: 'insight', label: 'Insights' },
+    { id: 'goal', label: isEn ? 'Goals' : 'Objectifs' },
+    { id: 'ai', label: 'Oplo.ai' },
+  ];
 
   const filteredNotifications = filter === 'all' 
     ? notifications 
@@ -90,12 +108,14 @@ export default function Notifications() {
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Notifications</h1>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">{isEn ? 'Notifications' : 'Notifications'}</h1>
           <p className="text-gray-500 mt-1">
-            {unreadCount > 0 ? `${unreadCount} non lue(s)` : 'Toutes lues'}
+            {unreadCount > 0 
+              ? `${unreadCount} ${isEn ? 'unread' : 'non lue(s)'}`
+              : isEn ? 'All caught up' : 'Toutes lues'
+            }
           </p>
         </div>
-        
         <div className="flex items-center gap-3">
           {unreadCount > 0 && (
             <Button 
@@ -104,7 +124,7 @@ export default function Notifications() {
               onClick={markAllAsRead}
               className="border-gray-200 text-gray-600 hover:text-gray-900"
             >
-              <CheckCheck className="w-4 h-4 mr-2" /> Tout marquer comme lu
+              <CheckCheck className="w-4 h-4 mr-2" /> {isEn ? 'Mark all as read' : 'Tout marquer comme lu'}
             </Button>
           )}
           <Button variant="ghost" size="icon" className="text-gray-400">
@@ -113,15 +133,8 @@ export default function Notifications() {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="flex gap-2 overflow-x-auto pb-2">
-        {[
-          { id: 'all', label: 'Toutes' },
-          { id: 'unread', label: 'Non lues' },
-          { id: 'insight', label: 'Insights' },
-          { id: 'goal', label: 'Objectifs' },
-          { id: 'ai', label: 'Oplo.ai' },
-        ].map(f => (
+        {filters.map(f => (
           <Button
             key={f.id}
             variant={filter === f.id ? 'default' : 'outline'}
@@ -138,65 +151,47 @@ export default function Notifications() {
         ))}
       </div>
 
-      {/* Notifications List */}
       <div className="space-y-3">
         {filteredNotifications.length === 0 ? (
           <div className="rounded-xl bg-white border border-gray-200 p-12 text-center">
             <Bell className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Aucune notification</h3>
-            <p className="text-gray-500">Vous êtes à jour !</p>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">{isEn ? 'No notifications' : 'Aucune notification'}</h3>
+            <p className="text-gray-500">{isEn ? 'You are all caught up!' : 'Vous êtes à jour !'}</p>
           </div>
         ) : (
           filteredNotifications.map(notification => {
             const config = typeConfig[notification.type] || typeConfig.insight;
             const Icon = config.icon;
-            
             return (
               <div 
                 key={notification.id}
-                className={cn(
-                  "rounded-xl border p-4 transition-all",
-                  notification.read 
-                    ? "bg-gray-50 border-gray-200" 
-                    : "bg-white border-gray-200"
-                )}
+                className={cn("rounded-xl border p-4 transition-all", notification.read ? "bg-gray-50 border-gray-200" : "bg-white border-gray-200")}
               >
                 <div className="flex items-start gap-4">
                   <div className={cn("p-2.5 rounded-xl", config.bg)}>
                     <Icon className={cn("w-5 h-5", config.color)} />
                   </div>
-                  
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className={cn(
-                        "font-medium",
-                        notification.read ? "text-gray-500" : "text-gray-900"
-                      )}>
+                      <h4 className={cn("font-medium", notification.read ? "text-gray-500" : "text-gray-900")}>
                         {notification.title}
                       </h4>
-                      {!notification.read && (
-                        <div className="w-2 h-2 rounded-full bg-blue-500" />
-                      )}
+                      {!notification.read && <div className="w-2 h-2 rounded-full bg-blue-500" />}
                     </div>
                     <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
                     <span className="text-xs text-gray-500">{notification.time}</span>
                   </div>
-                  
                   <div className="flex items-center gap-1">
                     {!notification.read && (
                       <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-gray-400 hover:text-gray-900"
+                        variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-900"
                         onClick={() => markAsRead(notification.id)}
                       >
                         <Check className="w-4 h-4" />
                       </Button>
                     )}
                     <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 text-gray-400 hover:text-red-600"
+                      variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-red-600"
                       onClick={() => deleteNotification(notification.id)}
                     >
                       <Trash2 className="w-4 h-4" />

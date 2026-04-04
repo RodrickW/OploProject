@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
+import { useLanguage } from '@/lib/LanguageContext';
 import { 
   User, 
   Trophy, 
@@ -26,18 +27,27 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 
-const achievements = [
-  { id: 1, name: 'Premier pas', description: 'Créer votre premier restaurant', icon: Star, unlocked: true, color: 'text-amber-400' },
-  { id: 2, name: 'Data Master', description: 'Analyser 100 insights', icon: Zap, unlocked: true, color: 'text-cyan-400' },
-  { id: 3, name: 'Stratège', description: 'Atteindre 5 objectifs', icon: Target, unlocked: true, color: 'text-emerald-400' },
-  { id: 4, name: 'Leader', description: 'Gérer une équipe de 20+', icon: Crown, unlocked: false, color: 'text-violet-400' },
-  { id: 5, name: 'Expert Oplo', description: '100 conversations avec Oplo.ai', icon: Medal, unlocked: false, color: 'text-pink-400' },
-  { id: 6, name: 'En feu !', description: '30 jours consécutifs d\'utilisation', icon: Flame, unlocked: false, color: 'text-orange-400' },
-];
-
 export default function Profile() {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
   const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+
+  const achievements = [
+    { id: 1, name: isEn ? 'First step' : 'Premier pas', description: isEn ? 'Create your first restaurant' : 'Créer votre premier restaurant', icon: Star, unlocked: true, color: 'text-amber-400' },
+    { id: 2, name: 'Data Master', description: isEn ? 'Analyse 100 insights' : 'Analyser 100 insights', icon: Zap, unlocked: true, color: 'text-cyan-400' },
+    { id: 3, name: isEn ? 'Strategist' : 'Stratège', description: isEn ? 'Reach 5 goals' : 'Atteindre 5 objectifs', icon: Target, unlocked: true, color: 'text-emerald-400' },
+    { id: 4, name: 'Leader', description: isEn ? 'Manage a team of 20+' : 'Gérer une équipe de 20+', icon: Crown, unlocked: false, color: 'text-violet-400' },
+    { id: 5, name: 'Oplo Expert', description: isEn ? '100 conversations with Oplo.ai' : '100 conversations avec Oplo.ai', icon: Medal, unlocked: false, color: 'text-pink-400' },
+    { id: 6, name: isEn ? 'On fire!' : 'En feu !', description: isEn ? '30 consecutive days of use' : '30 jours consécutifs d\'utilisation', icon: Flame, unlocked: false, color: 'text-orange-400' },
+  ];
+
+  const activities = [
+    { action: isEn ? 'Insight resolved' : 'Insight résolu', detail: isEn ? 'Menu optimisation' : 'Optimisation du menu', time: isEn ? '2h ago' : 'Il y a 2h', icon: Zap },
+    { action: isEn ? 'Goal reached' : 'Objectif atteint', detail: isEn ? 'Monthly revenue +15%' : 'CA mensuel +15%', time: isEn ? 'Yesterday' : 'Hier', icon: Target },
+    { action: isEn ? 'Oplo.ai conversation' : 'Conversation Oplo.ai', detail: isEn ? 'Expansion strategy' : 'Stratégie expansion', time: isEn ? '2 days ago' : 'Il y a 2j', icon: Star },
+  ];
 
   useEffect(() => {
     const loadUser = async () => {
@@ -77,8 +87,8 @@ export default function Profile() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Mon Profil</h1>
-          <p className="text-gray-500 mt-1">Gérez votre compte et vos récompenses</p>
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">{isEn ? 'My Profile' : 'Mon Profil'}</h1>
+          <p className="text-gray-500 mt-1">{isEn ? 'Manage your account and rewards' : 'Gérez votre compte et vos récompenses'}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button 
@@ -86,7 +96,7 @@ export default function Profile() {
             className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-400"
             onClick={handleLogout}
           >
-            <LogOut className="w-4 h-4 mr-2" /> Déconnexion
+            <LogOut className="w-4 h-4 mr-2" /> {isEn ? 'Log out' : 'Déconnexion'}
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -94,20 +104,22 @@ export default function Profile() {
                 variant="outline" 
                 className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
-                <Trash2 className="w-4 h-4 mr-2" /> Supprimer
+                <Trash2 className="w-4 h-4 mr-2" /> {isEn ? 'Delete' : 'Supprimer'}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Supprimer mon compte</AlertDialogTitle>
+                <AlertDialogTitle>{isEn ? 'Delete my account' : 'Supprimer mon compte'}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Cette action est irréversible. Votre compte et toutes vos données seront supprimées définitivement.
+                  {isEn
+                    ? 'This action is irreversible. Your account and all your data will be permanently deleted.'
+                    : 'Cette action est irréversible. Votre compte et toutes vos données seront supprimées définitivement.'}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <div className="flex gap-3 justify-end">
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogCancel>{isEn ? 'Cancel' : 'Annuler'}</AlertDialogCancel>
                 <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive hover:bg-destructive/90">
-                  Supprimer mon compte
+                  {isEn ? 'Delete my account' : 'Supprimer mon compte'}
                 </AlertDialogAction>
               </div>
             </AlertDialogContent>
@@ -132,15 +144,15 @@ export default function Profile() {
                 </button>
               </div>
               
-              <h2 className="text-xl font-bold text-gray-900">{user?.full_name || 'Utilisateur'}</h2>
+              <h2 className="text-xl font-bold text-gray-900">{user?.full_name || (isEn ? 'User' : 'Utilisateur')}</h2>
               <p className="text-sm text-gray-500">{user?.email}</p>
               
               <div className="mt-4 flex justify-center gap-2">
                 <Badge className="bg-blue-100 text-blue-700">
-                  <Crown className="w-3 h-3 mr-1" /> Niveau {stats.level}
+                  <Crown className="w-3 h-3 mr-1" /> {isEn ? 'Level' : 'Niveau'} {stats.level}
                 </Badge>
                 <Badge className="bg-amber-500/20 text-amber-400">
-                  <Trophy className="w-3 h-3 mr-1" /> {achievements.filter(a => a.unlocked).length} Trophées
+                  <Trophy className="w-3 h-3 mr-1" /> {achievements.filter(a => a.unlocked).length} {isEn ? 'Trophies' : 'Trophées'}
                 </Badge>
               </div>
             </div>
@@ -148,7 +160,7 @@ export default function Profile() {
             {/* Level Progress */}
             <div className="mt-6">
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-gray-500">Expérience</span>
+                <span className="text-gray-500">{isEn ? 'Experience' : 'Expérience'}</span>
                 <span className="text-gray-900">{stats.xp} / {stats.nextLevelXp} XP</span>
               </div>
               <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
@@ -158,7 +170,7 @@ export default function Profile() {
                 />
               </div>
               <p className="text-xs text-gray-500 mt-2 text-center">
-                {stats.nextLevelXp - stats.xp} XP jusqu'au niveau {stats.level + 1}
+                {stats.nextLevelXp - stats.xp} XP {isEn ? `until level ${stats.level + 1}` : `jusqu'au niveau ${stats.level + 1}`}
               </p>
             </div>
 
@@ -170,11 +182,11 @@ export default function Profile() {
               </div>
               <div className="text-center p-3 rounded-lg bg-gray-50">
                 <p className="text-lg font-bold text-gray-900">{stats.goalsAchieved}</p>
-                <p className="text-xs text-gray-500">Objectifs</p>
+                <p className="text-xs text-gray-500">{isEn ? 'Goals' : 'Objectifs'}</p>
               </div>
               <div className="text-center p-3 rounded-lg bg-gray-50">
                 <p className="text-lg font-bold text-gray-900">{stats.daysActive}</p>
-                <p className="text-xs text-gray-500">Jours actifs</p>
+                <p className="text-xs text-gray-500">{isEn ? 'Active days' : 'Jours actifs'}</p>
               </div>
             </div>
 
@@ -182,7 +194,7 @@ export default function Profile() {
               className="w-full mt-6 bg-gray-100 hover:bg-gray-200 text-gray-900"
               onClick={() => setIsEditing(!isEditing)}
             >
-              <Edit2 className="w-4 h-4 mr-2" /> Modifier le profil
+              <Edit2 className="w-4 h-4 mr-2" /> {isEn ? 'Edit profile' : 'Modifier le profil'}
             </Button>
           </div>
         </div>
@@ -194,10 +206,10 @@ export default function Profile() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-amber-600" />
-                Récompenses
+                {isEn ? 'Achievements' : 'Récompenses'}
               </h3>
               <span className="text-sm text-gray-500">
-                {achievements.filter(a => a.unlocked).length}/{achievements.length} débloquées
+                {achievements.filter(a => a.unlocked).length}/{achievements.length} {isEn ? 'unlocked' : 'débloquées'}
               </span>
             </div>
             
@@ -240,13 +252,9 @@ export default function Profile() {
 
           {/* Activity */}
           <div className="rounded-xl bg-white border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Activité récente</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">{isEn ? 'Recent activity' : 'Activité récente'}</h3>
             <div className="space-y-4">
-              {[
-                { action: 'Insight résolu', detail: 'Optimisation du menu', time: 'Il y a 2h', icon: Zap },
-                { action: 'Objectif atteint', detail: 'CA mensuel +15%', time: 'Hier', icon: Target },
-                { action: 'Conversation Oplo.ai', detail: 'Stratégie expansion', time: 'Il y a 2j', icon: Star },
-              ].map((activity, i) => (
+              {activities.map((activity, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-blue-100">
                     <activity.icon className="w-4 h-4 text-blue-600" />

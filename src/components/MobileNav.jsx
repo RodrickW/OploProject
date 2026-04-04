@@ -31,7 +31,13 @@ export default function MobileNav({ currentPageName }) {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 lg:hidden bg-white border-t border-gray-200 select-none" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div
+      className="fixed bottom-0 left-0 right-0 lg:hidden select-none border-t border-white/5"
+      style={{
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        background: '#0A0E1A',
+      }}
+    >
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -42,15 +48,26 @@ export default function MobileNav({ currentPageName }) {
               to={createPageUrl(item.page)}
               onClick={() => handleNavClick(item.page)}
               className={cn(
-                'flex-1 flex flex-col items-center justify-center py-3 px-2 transition-colors',
-                isActive
-                  ? 'text-violet-600 border-t-2 border-violet-600'
-                  : 'text-gray-500'
+                'flex-1 flex flex-col items-center justify-center py-3 px-2 transition-all duration-200 relative',
+                isActive ? 'text-white' : 'text-white/30 hover:text-white/60'
               )}
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <Icon className="w-6 h-6 mb-1" />
-              <span className="text-xs font-medium">{item.name}</span>
+              {isActive && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full" />
+              )}
+              <div className={cn(
+                "p-1.5 rounded-lg transition-all duration-200",
+                isActive ? "bg-gradient-to-br from-blue-600/30 to-cyan-600/20" : ""
+              )}>
+                <Icon className="w-5 h-5" />
+              </div>
+              <span className={cn(
+                "text-[10px] font-semibold mt-0.5 transition-all",
+                isActive ? "text-white" : "text-white/30"
+              )}>
+                {item.name}
+              </span>
             </Link>
           );
         })}

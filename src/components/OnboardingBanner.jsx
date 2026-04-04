@@ -29,20 +29,25 @@ export default function OnboardingBanner() {
   if (!show) return null;
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 flex items-center justify-between gap-4 text-sm">
+    <div
+      className="text-white px-4 py-2.5 flex items-center justify-between gap-4 text-sm"
+      style={{ background: 'linear-gradient(90deg, #1d4ed8 0%, #0891b2 100%)' }}
+    >
       <div className="flex items-center gap-2 min-w-0">
-        <Sparkles className="w-4 h-4 flex-shrink-0" />
-        <span className="truncate">{t.onboardingBanner.text}</span>
+        <div className="p-1 rounded-md bg-white/15 flex-shrink-0">
+          <Sparkles className="w-3.5 h-3.5" />
+        </div>
+        <span className="truncate text-xs font-medium text-white/90">{t.onboardingBanner.text}</span>
       </div>
       <div className="flex items-center gap-3 flex-shrink-0">
         <Link
           to={createPageUrl('Onboarding')}
-          className="flex items-center gap-1 font-semibold whitespace-nowrap bg-white/20 hover:bg-white/30 px-3 py-1 rounded-lg transition"
+          className="flex items-center gap-1.5 text-xs font-bold whitespace-nowrap bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg transition-all border border-white/20"
         >
-          {t.onboardingBanner.cta} <ArrowRight className="w-3.5 h-3.5" />
+          {t.onboardingBanner.cta} <ArrowRight className="w-3 h-3" />
         </Link>
-        <button onClick={dismiss} className="opacity-70 hover:opacity-100 transition">
-          <X className="w-4 h-4" />
+        <button onClick={dismiss} className="opacity-60 hover:opacity-100 transition p-1">
+          <X className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>

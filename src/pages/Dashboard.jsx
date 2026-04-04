@@ -146,29 +146,42 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-            {metrics.groupName ? `${metrics.groupName}` : t.dashboard.title}
-          </h1>
-          <p className="text-gray-500 mt-1">
-            {t.dashboard.subtitle} {metrics.groupName ? nbRestaurants : (allRestaurants.length || '...')} {t.dashboard.restaurants}
-            {metrics.countries ? ` · ${metrics.countries}` : ''}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link to={createPageUrl('OploChat')}>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
-              <Sparkles className="w-4 h-4" />
-              {t.dashboard.askOplo}
-            </Button>
-          </Link>
+      <div className="relative overflow-hidden rounded-2xl bg-white border border-gray-100 p-6 shadow-sm">
+        {/* Background decoration */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-blue-50 via-cyan-50/50 to-transparent pointer-events-none" />
+        <div className="absolute -top-6 right-12 w-32 h-32 bg-blue-100/40 rounded-full blur-2xl pointer-events-none" />
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 relative">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Live</span>
+            </div>
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">
+              {metrics.groupName ? `${metrics.groupName}` : t.dashboard.title}
+            </h1>
+            <p className="text-gray-400 mt-1 text-sm">
+              {t.dashboard.subtitle} {metrics.groupName ? nbRestaurants : (allRestaurants.length || '...')} {t.dashboard.restaurants}
+              {metrics.countries ? ` · ${metrics.countries}` : ''}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link to={createPageUrl('OploChat')}>
+              <Button
+                className="gap-2 text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-200"
+                style={{ background: 'linear-gradient(135deg, #2563eb, #0891b2)' }}
+              >
+                <Sparkles className="w-4 h-4" />
+                {t.dashboard.askOplo}
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         <MetricCard
+          colorIndex={0}
           title={t.dashboard.metrics.monthlyRevenue}
           value={metrics.totalRevenue > 0 ? metrics.totalRevenue : '—'}
           valuePrefix={metrics.totalRevenue > 0 ? "€" : ""}
@@ -176,12 +189,14 @@ export default function Dashboard() {
           icon={Euro}
         />
         <MetricCard
+          colorIndex={1}
           title={t.dashboard.metrics.coversPerDay}
           value={metrics.avgCoversPerDay > 0 ? metrics.avgCoversPerDay * nbRestaurants : '—'}
           changeLabel={metrics.avgCoversPerDay > 0 ? `${t.dashboard.metrics.avgPerResto} ${metrics.avgCoversPerDay}/resto` : t.dashboard.metrics.notProvided}
           icon={Users}
         />
         <MetricCard
+          colorIndex={2}
           title={t.dashboard.metrics.averageTicket}
           value={metrics.averageTicket > 0 ? metrics.averageTicket : '—'}
           valuePrefix={metrics.averageTicket > 0 ? "€" : ""}
@@ -189,18 +204,21 @@ export default function Dashboard() {
           icon={ShoppingCart}
         />
         <MetricCard
+          colorIndex={3}
           title={t.dashboard.metrics.customersPerMonth}
           value={metrics.totalCustomers > 0 ? metrics.totalCustomers : '—'}
           changeLabel={metrics.totalCustomers > 0 ? t.dashboard.metrics.groupEstimate : t.dashboard.metrics.notProvided}
           icon={Percent}
         />
         <MetricCard
+          colorIndex={4}
           title={t.dashboard.metrics.totalStaff}
           value={metrics.totalEmployees > 0 ? metrics.totalEmployees : '—'}
           changeLabel={metrics.totalEmployees > 0 ? t.dashboard.metrics.employees : t.dashboard.metrics.notProvided}
           icon={TrendingUp}
         />
         <MetricCard
+          colorIndex={5}
           title={t.dashboard.metrics.restaurants}
           value={nbRestaurants}
           changeLabel={metrics.countries || t.dashboard.metrics.group}
@@ -222,15 +240,17 @@ export default function Dashboard() {
       {/* Smart Insights & Restaurants */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Smart Insights */}
-        <div className="rounded-2xl bg-white border border-gray-200 p-5">
+        <div className="rounded-2xl bg-white border border-gray-100 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-blue-600" />
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md shadow-blue-500/20">
+                <Sparkles className="w-3.5 h-3.5 text-white" />
+              </div>
               <h3 className="font-semibold text-gray-900">{t.dashboard.insights.title}</h3>
             </div>
             <Link to={createPageUrl('Insights')}>
-              <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-900">
-                {t.dashboard.insights.seeAll} <ArrowRight className="w-4 h-4 ml-1" />
+              <Button variant="ghost" size="sm" className="text-gray-400 hover:text-gray-700 text-xs gap-1">
+                {t.dashboard.insights.seeAll} <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Link>
           </div>
@@ -257,10 +277,12 @@ export default function Dashboard() {
         </div>
 
         {/* Restaurants Overview */}
-        <div className="rounded-2xl bg-white border border-gray-200 p-5">
+        <div className="rounded-2xl bg-white border border-gray-100 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Store className="w-5 h-5 text-cyan-600" />
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 shadow-md shadow-cyan-500/20">
+                <Store className="w-3.5 h-3.5 text-white" />
+              </div>
               <h3 className="font-semibold text-gray-900">{t.dashboard.myRestaurants}</h3>
             </div>
             <Link to={createPageUrl('Restaurants')}>
@@ -314,7 +336,7 @@ export default function Dashboard() {
         <TopProductsCard productsData={topProductsData} />
         
         {/* Profil opérationnel depuis onboarding */}
-        <div className="lg:col-span-2 rounded-2xl bg-white border border-gray-200 p-5">
+        <div className="lg:col-span-2 rounded-2xl bg-white border border-gray-100 p-5 shadow-sm">
           <h3 className="text-sm font-medium text-gray-600 mb-4">{t.dashboard.operationalProfile}</h3>
           {!profile ? (
             <div className="text-center py-8 text-gray-400">

@@ -14,7 +14,7 @@ export default function TrafficSourceChart({ trafficData }) {
   const data = trafficData || [];
 
   return (
-    <div className="rounded-2xl bg-white border border-gray-200 p-5">
+    <div className="rounded-2xl bg-white border border-gray-100 p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-medium text-gray-600">
           {isEn ? 'Traffic sources' : 'Sources de trafic'}

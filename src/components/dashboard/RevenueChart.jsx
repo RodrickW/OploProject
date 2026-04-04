@@ -19,7 +19,7 @@ export default function RevenueChart({ chartData }) {
   const totalRevenue = data.reduce((sum, d) => sum + (d.revenue || 0), 0);
 
   return (
-    <div className="rounded-2xl bg-white border border-gray-200 p-5">
+    <div className="rounded-2xl bg-white border border-gray-100 p-5 shadow-sm">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-sm font-medium text-gray-600">

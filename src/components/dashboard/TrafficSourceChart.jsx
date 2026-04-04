@@ -2,20 +2,26 @@ import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { useLanguage } from '@/lib/LanguageContext';
 
 const COLORS = ['#2563eb', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
 
 export default function TrafficSourceChart({ trafficData }) {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
   const hasRealData = !!trafficData && trafficData.length > 0;
   const data = trafficData || [];
 
   return (
     <div className="rounded-2xl bg-white border border-gray-200 p-5">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-gray-600">Sources de trafic</h3>
+        <h3 className="text-sm font-medium text-gray-600">
+          {isEn ? 'Traffic sources' : 'Sources de trafic'}
+        </h3>
         {!hasRealData && (
           <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full">
-            Non enrichi
+            {isEn ? 'Not enriched' : 'Non enrichi'}
           </span>
         )}
       </div>
@@ -23,13 +29,13 @@ export default function TrafficSourceChart({ trafficData }) {
       {!hasRealData ? (
         <div className="h-48 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl">
           <p className="text-xs text-gray-400 text-center">
-            Sources de trafic non renseignées
+            {isEn ? 'Traffic sources not provided' : 'Sources de trafic non renseignées'}
           </p>
           <Link
             to={`${createPageUrl('OploChat')}?mode=enrich`}
             className="text-xs text-blue-600 mt-2 underline"
           >
-            Enrichir →
+            {isEn ? 'Enrich →' : 'Enrichir →'}
           </Link>
         </div>
       ) : (

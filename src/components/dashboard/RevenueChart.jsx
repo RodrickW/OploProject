@@ -2,23 +2,18 @@ import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { useLanguage } from '@/lib/LanguageContext';
 
-const defaultData = [
-  { month: 'Jan', revenue: 0, lastYear: 0 },
-  { month: 'Fév', revenue: 0, lastYear: 0 },
-  { month: 'Mar', revenue: 0, lastYear: 0 },
-  { month: 'Avr', revenue: 0, lastYear: 0 },
-  { month: 'Mai', revenue: 0, lastYear: 0 },
-  { month: 'Juin', revenue: 0, lastYear: 0 },
-  { month: 'Juil', revenue: 0, lastYear: 0 },
-  { month: 'Août', revenue: 0, lastYear: 0 },
-  { month: 'Sep', revenue: 0, lastYear: 0 },
-  { month: 'Oct', revenue: 0, lastYear: 0 },
-  { month: 'Nov', revenue: 0, lastYear: 0 },
-  { month: 'Déc', revenue: 0, lastYear: 0 },
-];
+const monthsFr = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export default function RevenueChart({ chartData }) {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
+  const months = isEn ? monthsEn : monthsFr;
+  const defaultData = months.map(m => ({ month: m, revenue: 0, lastYear: 0 }));
+
   const hasRealData = !!chartData && chartData.length > 0;
   const data = hasRealData ? chartData : defaultData;
   const totalRevenue = data.reduce((sum, d) => sum + (d.revenue || 0), 0);
@@ -27,16 +22,18 @@ export default function RevenueChart({ chartData }) {
     <div className="rounded-2xl bg-white border border-gray-200 p-5">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-sm font-medium text-gray-600">Évolution du revenu</h3>
+          <h3 className="text-sm font-medium text-gray-600">
+            {isEn ? 'Revenue trend' : 'Évolution du revenu'}
+          </h3>
           {hasRealData ? (
             <p className="text-2xl font-bold text-gray-900 mt-1">
               €{(totalRevenue / 1000).toFixed(0)}k
             </p>
           ) : (
             <p className="text-sm text-amber-600 mt-1">
-              Donnée non enrichie —{' '}
+              {isEn ? 'No data — ' : 'Donnée non enrichie — '}
               <Link to={`${createPageUrl('OploChat')}?mode=enrich`} className="underline">
-                Enrichir
+                {isEn ? 'Enrich' : 'Enrichir'}
               </Link>
             </p>
           )}
@@ -45,11 +42,11 @@ export default function RevenueChart({ chartData }) {
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-blue-600" />
-              <span className="text-gray-600">Cette année</span>
+              <span className="text-gray-600">{isEn ? 'This year' : 'Cette année'}</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-gray-400" />
-              <span className="text-gray-600">Année dernière</span>
+              <span className="text-gray-600">{isEn ? 'Last year' : 'Année dernière'}</span>
             </div>
           </div>
         )}
@@ -58,7 +55,10 @@ export default function RevenueChart({ chartData }) {
       {!hasRealData ? (
         <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl">
           <p className="text-sm text-gray-400 text-center">
-            Partagez vos exports de caisse à Oplo.ai<br />pour afficher l'évolution réelle de vos revenus
+            {isEn
+              ? <>Share your POS exports with Oplo.ai<br />to display your real revenue trend</>
+              : <>Partagez vos exports de caisse à Oplo.ai<br />pour afficher l'évolution réelle de vos revenus</>
+            }
           </p>
         </div>
       ) : (

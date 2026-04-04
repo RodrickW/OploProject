@@ -3,8 +3,12 @@ import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown, Users, Euro, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
+import { useLanguage } from '@/lib/LanguageContext';
 
 export default function RestaurantMiniCard({ restaurant }) {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
   const trend = Math.random() > 0.3 ? 'up' : 'down';
   const change = Math.floor(Math.random() * 15) + 1;
 
@@ -29,7 +33,9 @@ export default function RestaurantMiniCard({ restaurant }) {
           <h4 className="font-medium text-gray-900 text-sm truncate group-hover:text-blue-600 transition-colors">
             {restaurant.name}
           </h4>
-          <p className="text-xs text-gray-500">{restaurant.city || 'Non défini'}</p>
+          <p className="text-xs text-gray-500">
+            {restaurant.city || (isEn ? 'Not set' : 'Non défini')}
+          </p>
         </div>
         <div className={cn(
           "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
@@ -43,21 +49,21 @@ export default function RestaurantMiniCard({ restaurant }) {
       <div className="grid grid-cols-3 gap-2 text-center">
         <div className="bg-blue-50 rounded-lg p-2">
           <Euro className="w-3.5 h-3.5 text-blue-600 mx-auto mb-1" />
-          <p className="text-xs text-gray-500">Revenu</p>
+          <p className="text-xs text-gray-500">{isEn ? 'Revenue' : 'Revenu'}</p>
           <p className="text-sm font-semibold text-gray-900">
             €{((restaurant.monthly_revenue || 45000) / 1000).toFixed(0)}k
           </p>
         </div>
         <div className="bg-cyan-50 rounded-lg p-2">
           <Users className="w-3.5 h-3.5 text-cyan-600 mx-auto mb-1" />
-          <p className="text-xs text-gray-500">Clients</p>
+          <p className="text-xs text-gray-500">{isEn ? 'Customers' : 'Clients'}</p>
           <p className="text-sm font-semibold text-gray-900">
             {(restaurant.monthly_customers || 1200).toLocaleString()}
           </p>
         </div>
         <div className="bg-amber-50 rounded-lg p-2">
           <Star className="w-3.5 h-3.5 text-amber-500 mx-auto mb-1" />
-          <p className="text-xs text-gray-500">Note</p>
+          <p className="text-xs text-gray-500">{isEn ? 'Rating' : 'Note'}</p>
           <p className="text-sm font-semibold text-gray-900">
             {(restaurant.satisfaction_score || 4.5).toFixed(1)}
           </p>

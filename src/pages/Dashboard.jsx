@@ -230,7 +230,7 @@ export default function Dashboard() {
             </div>
             <Link to={createPageUrl('Insights')}>
               <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-900">
-                Voir tout <ArrowRight className="w-4 h-4 ml-1" />
+                {t.dashboard.insights.seeAll} <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
           </div>
@@ -265,7 +265,7 @@ export default function Dashboard() {
             </div>
             <Link to={createPageUrl('Restaurants')}>
               <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-900">
-                Gérer <ArrowRight className="w-4 h-4 ml-1" />
+                {t.dashboard.manage} <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
           </div>
@@ -326,14 +326,14 @@ export default function Dashboard() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className={`rounded-xl p-3 border text-center ${metrics.hasDelivery ? 'bg-emerald-50 border-emerald-100' : 'bg-gray-50 border-gray-100'}`}>
                   <p className="text-lg mb-1">{metrics.hasDelivery ? '✅' : '❌'}</p>
-                  <p className="text-xs font-medium text-gray-700">Livraison</p>
+                  <p className="text-xs font-medium text-gray-700">{t.dashboard.delivery}</p>
                 </div>
                 <div className={`rounded-xl p-3 border text-center ${metrics.hasTakeaway ? 'bg-emerald-50 border-emerald-100' : 'bg-gray-50 border-gray-100'}`}>
                   <p className="text-lg mb-1">{metrics.hasTakeaway ? '✅' : '❌'}</p>
-                  <p className="text-xs font-medium text-gray-700">À emporter</p>
+                  <p className="text-xs font-medium text-gray-700">{t.dashboard.takeaway}</p>
                 </div>
                 <div className="rounded-xl p-3 border bg-blue-50 border-blue-100 text-center col-span-2">
-                  <p className="text-xs text-gray-500 mb-1">POS / Caisse</p>
+                  <p className="text-xs text-gray-500 mb-1">{t.dashboard.posSystem}</p>
                   <p className="text-sm font-semibold text-gray-800">{metrics.posSystem || '—'}</p>
                 </div>
               </div>

@@ -126,7 +126,7 @@ export default function Navbar() {
               onClick={() => isMobile && setIsPlatformeOpen(!isPlatformeOpen)}
               className="text-sm text-gray-600 hover:text-gray-900 transition flex items-center gap-1"
             >
-              Plateforme
+              {t.navbar.platform}
               <ChevronDown className="w-4 h-4" />
             </button>
 
@@ -144,11 +144,7 @@ export default function Navbar() {
                     <div className="rounded-lg border border-gray-200 p-4 bg-gray-50 shadow-sm mb-4">
                       <h4 className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">{t.navbar.products}</h4>
                       <div className="space-y-2">
-                        {[
-                          { name: "Gestion hôtelière (PMS)", icon: "🏨", page: "Solutions" },
-                          { name: "Revenue Management (RMS)", icon: "💰", page: "Solutions" },
-                          { name: "Point of Sale (POS)", icon: "💳", page: "Solutions" }
-                        ].map((item, idx) => (
+                        {t.navbar.platform_products.map((item, idx) => ({...item, page: "Solutions"})).map((item, idx) => (
                           <motion.div
                             key={idx}
                             initial={{ opacity: 0, x: -10 }}
@@ -171,10 +167,7 @@ export default function Navbar() {
                     <div className="rounded-lg border border-gray-200 p-4 bg-gray-50 shadow-sm">
                       <h4 className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">{t.navbar.platform}</h4>
                       <div className="space-y-2">
-                        {[
-                          { name: "Marketplace", icon: "🏪", page: "IntegrationsOplo" },
-                          { name: "Open API", icon: "⚙️", page: "IntegrationsOplo" }
-                        ].map((item, idx) => (
+                        {t.navbar.platform_integrations.map((item, idx) => ({...item, page: "IntegrationsOplo"})).map((item, idx) => (
                           <motion.div
                             key={idx}
                             initial={{ opacity: 0, x: -10 }}
@@ -195,9 +188,8 @@ export default function Navbar() {
                     </div>
                   </div>
 
-                  {/* {t.navbar.overview} */}
                   <div className="rounded-lg border border-gray-200 p-4 bg-gray-50 shadow-sm">
-                    <h4 className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">Vue d'ensemble</h4>
+                    <h4 className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">{t.navbar.overview}</h4>
                     <motion.div
                       initial={{ opacity: 0, x: 10 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -260,7 +252,7 @@ export default function Navbar() {
               onClick={() => isMobile && setIsRessourcesOpen(!isRessourcesOpen)}
               className="text-sm text-gray-600 hover:text-gray-900 transition flex items-center gap-1"
             >
-              Ressources
+              {t.navbar.resources}
               <ChevronDown className="w-4 h-4" />
             </button>
 
@@ -277,13 +269,7 @@ export default function Navbar() {
                   <div className="rounded-lg border border-gray-200 p-4 bg-gray-50 shadow-sm">
                     <h4 className="text-xs font-bold text-gray-600 mb-3 uppercase tracking-wide">{t.navbar.explore}</h4>
                     <div className="space-y-2">
-                      {[
-                        { name: "Blog", icon: "📝" },
-                        { name: "Recherche", icon: "🔍", page: "Search" },
-                        { name: "Oplo.ai University", icon: "🎓", page: "University" },
-                        { name: "Team As a Service", icon: "👥", page: "TeamAsAService" },
-                        { name: "Développeurs", icon: "💻", page: "Devs" }
-                      ].map((item, idx) => (
+                      {t.navbar.resources_explore.map((item, idx) => (
                         item.page ? (
                           <motion.div
                             key={idx}
@@ -322,13 +308,7 @@ export default function Navbar() {
                     <div className="rounded-lg border border-gray-200 p-3 bg-gray-50 shadow-sm">
                       <h4 className="text-xs font-bold text-gray-600 mb-2 uppercase tracking-wide">{t.navbar.company}</h4>
                       <div className="space-y-1.5">
-                        {[
-                          { name: "À propos", icon: "ℹ️", page: "AboutOplo" },
-                          { name: "Partenariats", icon: "🤝", page: "Partners" },
-                          { name: "Carrières", icon: "💼", page: "Careers" },
-                          { name: "Contacts", icon: "📧", page: "Contact" },
-                          { name: "Affiliates", icon: "🌟", page: "Affiliates" }
-                        ].map((item, idx) => (
+                        {t.navbar.company_links.map((item, idx) => (
                           item.page ? (
                             <motion.div
                               key={idx}
@@ -387,11 +367,11 @@ export default function Navbar() {
           </div>
 
           <Link to={createPageUrl('AboutOplo')} className="text-sm text-gray-600 hover:text-gray-900 transition">
-            À propos
+            {t.navbar.about}
           </Link>
 
           <Link to={createPageUrl('PricingPage')} className="text-sm text-gray-600 hover:text-gray-900 transition">
-            Tarifs
+            {t.navbar.pricing}
           </Link>
         </div>
 
@@ -403,13 +383,13 @@ export default function Navbar() {
             className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             onClick={() => base44.auth.redirectToLogin()}
           >
-            Se connecter
+            {t.navbar.login}
           </Button>
           <Button 
             className="bg-blue-600 hover:bg-blue-700 text-white"
             onClick={() => window.location.href = createPageUrl('QuoteQualification')}
           >
-            Demander une démo
+            {t.navbar.requestDemo}
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         </div>
@@ -439,28 +419,28 @@ export default function Navbar() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition"
               >
-                Accueil
+                {t.navbar.home}
               </Link>
               <Link
                 to={createPageUrl('AboutOplo')}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition"
               >
-                À propos
+                {t.navbar.about}
               </Link>
               <Link
                 to={createPageUrl('PricingPage')}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition"
               >
-                Tarifs
+                {t.navbar.pricing}
               </Link>
               <Link
                 to={createPageUrl('Contact')}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block py-2 text-sm font-medium text-gray-700 hover:text-blue-600 transition"
               >
-                Contact
+                {t.navbar.contact}
               </Link>
               <div className="pt-3 border-t border-gray-100 space-y-2">
                 <Button
@@ -468,13 +448,13 @@ export default function Navbar() {
                   className="w-full"
                   onClick={() => { setIsMobileMenuOpen(false); base44.auth.redirectToLogin(); }}
                 >
-                  Se connecter
+                  {t.navbar.login}
                 </Button>
                 <Button
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={() => { setIsMobileMenuOpen(false); window.location.href = createPageUrl('QuoteQualification'); }}
                 >
-                  Demander une démo
+                  {t.navbar.requestDemo}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>

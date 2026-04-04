@@ -33,7 +33,7 @@ const distPath = path.resolve(__dirname, '../dist');
 if (existsSync(path.join(distPath, 'index.html'))) {
   console.log('Serving static frontend from dist/');
   app.use(express.static(distPath));
-  app.get('*', (req, res) => {
+  app.get('/{*path}', (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 } else {

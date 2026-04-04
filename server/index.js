@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import entityRoutes from './routes/entities.js';
@@ -14,7 +15,6 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || process.env.API_PORT || 3001;
-const isProd = process.env.NODE_ENV === 'production';
 
 app.use(cors());
 app.use(express.json());
@@ -28,12 +28,16 @@ app.use('/api/suppliers', supplierRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/calls', callRoutes);
 
-if (isProd) {
-  const distPath = path.resolve(__dirname, '../dist');
+// Serve built React frontend if dist/ exists (production)
+const distPath = path.resolve(__dirname, '../dist');
+if (existsSync(path.join(distPath, 'index.html'))) {
+  console.log('Serving static frontend from dist/');
   app.use(express.static(distPath));
   app.get('*', (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
+} else {
+  console.log('No dist/ found — running in API-only / dev mode');
 }
 
 app.use((err, req, res, next) => {
@@ -42,5 +46,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Oplo API server running on port ${PORT} (${isProd ? 'production' : 'development'})`);
+  console.log(`Oplo API server running on port ${PORT}`);
 });

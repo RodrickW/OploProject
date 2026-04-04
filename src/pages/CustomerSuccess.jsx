@@ -153,7 +153,7 @@ export default function CustomerSuccess() {
                 <span className="text-sm text-gray-500">À risque</span>
               </div>
               <p className="text-2xl font-bold text-gray-900">{stats.atRisk.toLocaleString()}</p>
-              <p className="text-xs text-gray-500 mt-2">Dernière visite > 60j</p>
+              <p className="text-xs text-gray-500 mt-2">Dernière visite &gt; 60j</p>
             </div>
           </div>
 

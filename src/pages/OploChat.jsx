@@ -152,7 +152,7 @@ export default function OploChat() {
   const isOnboardingMode = urlParams.get('onboarding') === '1';
   const isEnrichMode = urlParams.get('mode') === 'enrich';
 
-  const { language, setLanguage } = useLanguage();
+  const { language, changeLanguage } = useLanguage();
   const [chatLang, setChatLang] = useState(language);
 
   const ui = UI_TEXT[chatLang] || UI_TEXT.fr;
@@ -213,7 +213,7 @@ export default function OploChat() {
   const toggleChatLang = () => {
     const next = chatLang === 'fr' ? 'en' : 'fr';
     setChatLang(next);
-    setLanguage(next);
+    changeLanguage(next);
   };
 
   const handleFileUpload = async (e) => {

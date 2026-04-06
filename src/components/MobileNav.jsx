@@ -18,7 +18,6 @@ export default function MobileNav({ currentPageName }) {
     { name: t.mobileNav.profile, icon: UserCircle, page: 'Profile' },
   ];
 
-  const location = useLocation();
   const lastClickRef = useRef({});
 
   const handleNavClick = (page) => {
@@ -32,11 +31,8 @@ export default function MobileNav({ currentPageName }) {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 lg:hidden select-none border-t border-white/5"
-      style={{
-        paddingBottom: 'env(safe-area-inset-bottom)',
-        background: '#0A0E1A',
-      }}
+      className="fixed bottom-0 left-0 right-0 lg:hidden select-none bg-white border-t border-gray-100"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <div className="flex items-center justify-around">
         {navItems.map((item) => {
@@ -48,23 +44,23 @@ export default function MobileNav({ currentPageName }) {
               to={createPageUrl(item.page)}
               onClick={() => handleNavClick(item.page)}
               className={cn(
-                'flex-1 flex flex-col items-center justify-center py-3 px-2 transition-all duration-200 relative',
-                isActive ? 'text-white' : 'text-white/30 hover:text-white/60'
+                'flex-1 flex flex-col items-center justify-center py-2.5 px-2 transition-all duration-200 relative',
+                isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
               )}
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               {isActive && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full" />
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full" />
               )}
               <div className={cn(
-                "p-1.5 rounded-lg transition-all duration-200",
-                isActive ? "bg-gradient-to-br from-blue-600/30 to-cyan-600/20" : ""
+                "p-1.5 rounded-xl transition-all duration-200",
+                isActive ? "bg-blue-50" : ""
               )}>
                 <Icon className="w-5 h-5" />
               </div>
               <span className={cn(
-                "text-[10px] font-semibold mt-0.5 transition-all",
-                isActive ? "text-white" : "text-white/30"
+                "text-[10px] font-semibold mt-0.5",
+                isActive ? "text-blue-600" : "text-gray-400"
               )}>
                 {item.name}
               </span>

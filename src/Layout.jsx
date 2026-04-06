@@ -116,20 +116,20 @@ export default function Layout({ children, currentPageName }) {
         className={cn(
           "group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative",
           isActive
-            ? "bg-white/10 text-white shadow-lg"
-            : "text-white/50 hover:text-white/90 hover:bg-white/5",
+            ? "bg-blue-50 text-blue-600"
+            : "text-gray-500 hover:text-gray-800 hover:bg-gray-50",
         )}
       >
         {isActive && (
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-gradient-to-b from-blue-400 to-cyan-400 rounded-full" />
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full" />
         )}
 
         {showLetter && item.letter ? (
           <span className={cn(
             "w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold flex-shrink-0 transition-all",
             isActive
-              ? `${letterColor?.bg} text-white shadow-md ${letterColor?.glow}`
-              : "bg-white/10 text-white/50 group-hover:bg-white/15 group-hover:text-white/80"
+              ? `${letterColor?.bg} text-white shadow-sm`
+              : "bg-gray-100 text-gray-400 group-hover:bg-gray-200 group-hover:text-gray-600"
           )}>
             {item.letter}
           </span>
@@ -137,23 +137,20 @@ export default function Layout({ children, currentPageName }) {
           <div className={cn(
             "w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 transition-all",
             isActive
-              ? "bg-gradient-to-br from-violet-500 to-blue-500 shadow-md shadow-violet-500/40"
-              : "bg-gradient-to-br from-violet-500/30 to-blue-500/30 group-hover:from-violet-500/50 group-hover:to-blue-500/50"
+              ? "bg-gradient-to-br from-violet-500 to-blue-500 shadow-sm"
+              : "bg-gradient-to-br from-violet-100 to-blue-100 group-hover:from-violet-200 group-hover:to-blue-200"
           )}>
-            <item.icon className="w-3.5 h-3.5 text-white" />
+            <item.icon className={cn("w-3.5 h-3.5", isActive ? "text-white" : "text-violet-500")} />
           </div>
         ) : (
           <item.icon className={cn(
-            "w-4.5 h-4.5 flex-shrink-0 transition-all",
-            isActive ? "text-white" : "text-white/40 group-hover:text-white/70"
+            "flex-shrink-0 transition-all",
+            isActive ? "text-blue-600" : "text-gray-400 group-hover:text-gray-600"
           )} style={{ width: '18px', height: '18px' }} />
         )}
 
         {!collapsed && (
-          <span className={cn(
-            "text-sm font-medium truncate flex-1 transition-all",
-            isActive ? "text-white" : ""
-          )}>
+          <span className="text-sm font-medium truncate flex-1 transition-all">
             {item.name}
           </span>
         )}
@@ -181,8 +178,8 @@ export default function Layout({ children, currentPageName }) {
           </div>
           {!collapsed && (
             <div>
-              <h1 className="text-base font-bold text-white tracking-tight leading-none">Oplo.ai</h1>
-              <p className="text-[9px] text-white/30 uppercase tracking-widest mt-0.5">Restaurant Intelligence</p>
+              <h1 className="text-base font-bold text-gray-900 tracking-tight leading-none">Oplo.ai</h1>
+              <p className="text-[9px] text-gray-400 uppercase tracking-widest mt-0.5">Restaurant Intelligence</p>
             </div>
           )}
         </Link>
@@ -197,13 +194,13 @@ export default function Layout({ children, currentPageName }) {
         </div>
 
         {/* Divider */}
-        <div className="my-4 border-t border-white/5" />
+        <div className="my-4 border-t border-gray-100" />
 
         {/* COMPAST Section */}
         <div>
           {!collapsed && (
             <div className="px-3 mb-2">
-              <h2 className="text-[9px] font-bold text-white/25 uppercase tracking-widest">{t.nav.compastFramework}</h2>
+              <h2 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{t.nav.compastFramework}</h2>
             </div>
           )}
           <div className="space-y-0.5">
@@ -217,7 +214,7 @@ export default function Layout({ children, currentPageName }) {
         <div className="mt-4">
           {!collapsed && (
             <div className="px-3 mb-2">
-              <h2 className="text-[9px] font-bold text-white/25 uppercase tracking-widest">{t.nav.integrations}</h2>
+              <h2 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{t.nav.integrations}</h2>
             </div>
           )}
           <div className="space-y-0.5">
@@ -229,7 +226,7 @@ export default function Layout({ children, currentPageName }) {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="px-3 pb-3 border-t border-white/5 pt-3 space-y-0.5 flex-shrink-0">
+      <div className="px-3 pb-3 border-t border-gray-100 pt-3 space-y-0.5 flex-shrink-0">
         {bottomNav.filter(item => {
           if (item.adminOnly && currentUser?.role !== 'admin') return false;
           if (item.hideForAdmin && currentUser?.role === 'admin') return false;
@@ -247,7 +244,7 @@ export default function Layout({ children, currentPageName }) {
       {/* Collapse Button */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="hidden lg:flex mx-3 mb-4 items-center justify-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/30 hover:text-white/70 transition-all flex-shrink-0 border border-white/5"
+        className="hidden lg:flex mx-3 mb-4 items-center justify-center gap-2 px-3 py-2 rounded-xl bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all flex-shrink-0 border border-gray-100"
       >
         {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         {!collapsed && <span className="text-xs">{t.nav.collapse}</span>}
@@ -328,7 +325,7 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Mobile Sidebar */}
       <div className={cn(
-        "lg:hidden fixed top-0 left-0 bottom-0 z-50 w-72 bg-[#0A0E1A] transform transition-transform duration-300 border-r border-white/5",
+        "lg:hidden fixed top-0 left-0 bottom-0 z-50 w-72 bg-white transform transition-transform duration-300 border-r border-gray-100 shadow-xl",
         mobileOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <SidebarContent />
@@ -336,17 +333,17 @@ export default function Layout({ children, currentPageName }) {
 
       {/* Desktop Sidebar */}
       <div className={cn(
-        "hidden lg:block fixed top-0 left-0 bottom-0 bg-[#0A0E1A] border-r border-white/5 transition-all duration-300 z-40",
+        "hidden lg:block fixed top-0 left-0 bottom-0 bg-white border-r border-gray-100 transition-all duration-300 z-40",
         collapsed ? "w-20" : "w-64"
       )}>
         <SidebarContent />
       </div>
 
       {/* Mobile Top Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-[#0A0E1A] border-b border-white/5 flex items-center justify-between px-4 h-14">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-100 flex items-center justify-between px-4 h-14">
         <button
           onClick={() => setMobileOpen(true)}
-          className="p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition"
+          className="p-2 rounded-xl text-gray-500 hover:text-gray-800 hover:bg-gray-100 transition"
           data-testid="button-mobile-menu"
         >
           <Menu className="w-5 h-5" />
@@ -359,7 +356,7 @@ export default function Layout({ children, currentPageName }) {
               <rect x="90" y="30" width="75" height="130" rx="18" transform="rotate(20 127 95)" fill="white"/>
             </svg>
           </div>
-          <span className="text-sm font-bold text-white">Oplo.ai</span>
+          <span className="text-sm font-bold text-gray-900">Oplo.ai</span>
         </Link>
         <LanguageSelector />
       </div>

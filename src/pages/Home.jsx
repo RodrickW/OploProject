@@ -120,83 +120,63 @@ export default function Home() {
   return (
       <div className="min-h-screen bg-white relative overflow-hidden">
       {/* Hero Section */}
-      <section className="pt-20 pb-20 px-6 relative overflow-hidden">
-        {/* Background gradient orbs and blue reflections */}
-        <div className="absolute inset-0 overflow-hidden">
-          <motion.div
-            animate={{ y: [0, 40, 0], x: [0, 20, 0] }}
-            transition={{ duration: 8, repeat: Infinity }}
-            className="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full opacity-20 blur-3xl"
-          />
-          <motion.div
-            animate={{ y: [0, -40, 0], x: [0, -20, 0] }}
-            transition={{ duration: 10, repeat: Infinity, delay: 1 }}
-            className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-400 rounded-full opacity-20 blur-3xl"
-          />
-          {/* Blue reflection accent */}
-          <div className="absolute top-1/4 right-1/3 w-96 h-96 bg-gradient-to-br from-blue-500/10 to-cyan-500/5 rounded-full blur-3xl opacity-40" />
-        </div>
-
+      <section className="pt-24 pb-20 px-6 relative overflow-hidden" style={{ background: 'radial-gradient(ellipse 120% 80% at 50% -10%, #dbeafe 0%, #e0e7ff 30%, #f8faff 60%, #ffffff 100%)' }}>
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="mb-16">
-            <div className="text-center max-w-3xl mx-auto">
+            <div className="text-center max-w-2xl mx-auto">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
               >
-                <span className="mb-6 inline-block bg-blue-100 text-blue-700 border border-blue-300 hover:bg-white hover:text-gray-600 hover:border-gray-300 transition-colors px-4 py-1 rounded-md text-xs font-semibold">
+                <span className="mb-8 inline-block border border-blue-200 bg-white/70 backdrop-blur-sm text-blue-700 px-5 py-1.5 rounded-full text-sm font-medium shadow-sm">
                   Plateforme d'Intelligence Opérationnelle
                 </span>
               </motion.div>
 
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-5xl md:text-6xl font-normal text-gray-900 mb-6 leading-tight"
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-[1.1] tracking-tight"
               >
-                Pilotez votre groupe <br/>
-                <span className="bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 bg-clip-text text-transparent animate-pulse">comme une machine</span>
+                Pilotez votre groupe{' '}
+                <span className="block bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-500 bg-clip-text text-transparent">
+                  comme une machine
+                </span>
               </motion.h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-lg text-gray-600 mb-10 leading-relaxed"
-                >
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="text-base text-gray-500 mb-10 leading-relaxed max-w-sm mx-auto"
+              >
                 La plateforme IA tout-en-un pour standardiser vos opérations et scaler sans limites
               </motion.p>
 
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="flex flex-col items-center gap-3 mb-16"
               >
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                        <Button 
-                          size="lg" 
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-base shadow-lg hover:shadow-xl transition-shadow"
-                          onClick={() => window.location.href = createPageUrl('QuoteQualification')}
-                        >
-                          Demander une démo
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
-                      </motion.div>
-
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                        <Button 
-                          size="lg" 
-                          variant="outline"
-                          className="bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 text-base"
-                          onClick={() => document.getElementById('plateforme').scrollIntoView({ behavior: 'smooth' })}
-                        >
-                          En savoir plus
-                        </Button>
-                      </motion.div>
-
+                <Button
+                  size="lg"
+                  className="w-full max-w-xs bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl shadow-md hover:shadow-lg transition-all"
+                  onClick={() => window.location.href = createPageUrl('QuoteQualification')}
+                >
+                  Demander une démo
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full max-w-xs border border-gray-300 text-gray-700 hover:bg-gray-50 text-base font-semibold rounded-xl bg-white/80"
+                  onClick={() => document.getElementById('plateforme')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  En savoir plus
+                </Button>
               </motion.div>
             </div>
           </div>
@@ -204,7 +184,7 @@ export default function Home() {
       </section>
 
       {/* Why Choose Section */}
-      <section className="py-20 px-6 bg-white border-t border-gray-200">
+      <section className="py-20 px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -256,7 +236,7 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 gap-4">
             {[
               {
                 stat: "94%",
@@ -284,11 +264,11 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
-                className="rounded-xl bg-gradient-to-br from-gray-50 to-white border border-gray-200 p-8 text-center hover:shadow-lg transition flex flex-col items-center justify-center"
+                className="rounded-2xl bg-white border border-gray-100 p-6 shadow-sm flex flex-col"
               >
-                <div className="text-4xl font-bold text-blue-600 mb-2">{item.stat}</div>
-                <h3 className="font-semibold text-gray-900 mb-2">{item.label}</h3>
-                <p className="text-sm text-gray-600">{item.description}</p>
+                <div className="text-4xl font-bold text-blue-600 mb-2 leading-none">{item.stat}</div>
+                <h3 className="font-bold text-gray-900 text-base mb-1.5">{item.label}</h3>
+                <p className="text-sm text-gray-500 leading-snug">{item.description}</p>
               </motion.div>
             ))}
           </div>

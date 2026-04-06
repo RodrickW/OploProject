@@ -24,7 +24,10 @@ import { Badge } from '@/components/ui/badge';
 export default function Home() {
   const [checking, setChecking] = React.useState(true);
 
+  const isPreview = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('preview') === '1';
+
   useEffect(() => {
+    if (isPreview) { setChecking(false); return; }
     base44.auth.isAuthenticated().then((authenticated) => {
       if (authenticated) {
         window.location.href = createPageUrl('Dashboard');

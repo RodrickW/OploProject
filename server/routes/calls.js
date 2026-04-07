@@ -27,8 +27,8 @@ function getPublicUrl() {
 pool.query(`
   CREATE TABLE IF NOT EXISTS supplier_calls (
     id SERIAL PRIMARY KEY,
-    item_id INTEGER,
-    supplier_id INTEGER,
+    item_id TEXT,
+    supplier_id TEXT,
     item_name VARCHAR(255),
     supplier_name VARCHAR(255),
     supplier_phone VARCHAR(100),
@@ -44,6 +44,15 @@ pool.query(`
     updated_at TIMESTAMP DEFAULT NOW()
   )
 `).catch(err => console.error('Failed to create supplier_calls table:', err));
+
+function normalizePhone(phone) {
+  if (!phone) return phone;
+  const digits = phone.replace(/[\s\-\.\(\)]/g, '');
+  if (digits.startsWith('+')) return digits;
+  if (digits.startsWith('00')) return '+' + digits.slice(2);
+  if (digits.startsWith('0') && digits.length === 10) return '+33' + digits.slice(1);
+  return digits;
+}
 
 async function generateCallScript(item, supplier, quantity, language) {
   const langInstruction = language === 'en'
@@ -122,6 +131,7 @@ router.post('/initiate', async (req, res) => {
     }
 
     const qty = quantity || Math.max(item.par_level - item.current_quantity, 1);
+    const normalizedPhone = normalizePhone(item.supplier_phone);
 
     // Generate call script with OpenAI
     const script = await generateCallScript(item, {
@@ -134,7 +144,7 @@ router.post('/initiate', async (req, res) => {
       `INSERT INTO supplier_calls
          (item_id, supplier_id, item_name, supplier_name, supplier_phone, call_script, status, language, quantity_ordered, unit)
        VALUES ($1, $2, $3, $4, $5, $6, 'initiating', $7, $8, $9) RETURNING *`,
-      [item_id, item.supplier_id, item.name, item.supplier_name, item.supplier_phone, script, language, qty, item.unit]
+      [item_id, item.supplier_id, item.name, item.supplier_name, normalizedPhone, script, language, qty, item.unit]
     );
     const callRecord = callRes.rows[0];
 
@@ -143,9 +153,8 @@ router.post('/initiate', async (req, res) => {
     const publicUrl = getPublicUrl();
     const twimlUrl = `${publicUrl}/api/calls/twiml/${callRecord.id}`;
     const statusCallbackUrl = `${publicUrl}/api/calls/status-callback`;
-
     const twilioCall = await client.calls.create({
-      to: item.supplier_phone,
+      to: normalizedPhone,
       from: process.env.TWILIO_PHONE_NUMBER,
       url: twimlUrl,
       statusCallback: statusCallbackUrl,

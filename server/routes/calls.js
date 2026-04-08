@@ -245,7 +245,7 @@ router.all('/twiml/:callId', async (req, res) => {
     const safeScript = xmlEscape(call.call_script);
     const goodbye = call.language === 'en'
       ? 'Thank you. This was an automated message from Oplo AI. Goodbye.'
-      : 'Merci. Ce message automatique vous a &eacute;t&eacute; envoy&eacute; par Oplo AI. Au revoir.';
+      : 'Merci. Ce message automatique vous a été envoyé par Oplo AI. Au revoir.';
 
     console.log(`TwiML serving: lang=${lang}, voice=${voice}, script length=${safeScript.length}`);
 

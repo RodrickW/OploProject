@@ -166,8 +166,8 @@ router.post('/initiate', async (req, res) => {
     const twimlUrl = `${publicUrl}/api/calls/twiml/${callRecord.id}`;
     const statusCallbackUrl = `${publicUrl}/api/calls/status-callback`;
 
-    console.log(`[Call] FROM: ${fromNumber} → TO: ${normalizedPhone}`);
-    console.log(`[Call] TwiML URL: ${twimlUrl}`);
+    console.error(`[Call] FROM: ${fromNumber} → TO: ${normalizedPhone}`);
+    console.error(`[Call] TwiML URL: ${twimlUrl}`);
 
     const twilioCall = await client.calls.create({
       to: normalizedPhone,

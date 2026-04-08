@@ -10,6 +10,7 @@ const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
+
 function getTwilioClient() {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
@@ -106,6 +107,7 @@ Return the spoken script only, nothing else.`;
   const raw = response.choices[0]?.message?.content?.trim() || '';
   return cleanScript(raw);
 }
+
 
 // List all calls
 router.get('/', async (req, res) => {
@@ -240,8 +242,8 @@ router.all('/twiml/:callId', async (req, res) => {
     }
 
     const call = result.rows[0];
-    const lang = call.language === 'en' ? 'en-GB' : 'fr-FR';
-    const voice = call.language === 'en' ? 'Polly.Amy' : 'alice';
+    const lang = 'en-GB';
+    const voice = 'Polly.Amy';
     const safeScript = xmlEscape(call.call_script);
     const goodbye = call.language === 'en'
       ? 'Thank you. This was an automated message from Oplo AI. Goodbye.'

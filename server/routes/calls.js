@@ -163,10 +163,13 @@ router.post('/initiate', async (req, res) => {
 
     // Initiate Twilio call
     const client = getTwilioClient();
-    const publicUrl = getPublicUrl();
+    // Build base URL from the actual incoming request — works in any environment
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const host = req.headers['x-forwarded-host'] || req.get('host');
+    const baseUrl = host ? `${protocol}://${host}` : getPublicUrl();
     const fromNumber = normalizePhone(process.env.TWILIO_PHONE_NUMBER);
-    const twimlUrl = `${publicUrl}/api/calls/twiml/${callRecord.id}`;
-    const statusCallbackUrl = `${publicUrl}/api/calls/status-callback`;
+    const twimlUrl = `${baseUrl}/api/calls/twiml/${callRecord.id}`;
+    const statusCallbackUrl = `${baseUrl}/api/calls/status-callback`;
 
     console.error(`[Call] FROM: ${fromNumber} → TO: ${normalizedPhone}`);
     console.error(`[Call] TwiML URL: ${twimlUrl}`);

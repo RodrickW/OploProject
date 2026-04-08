@@ -48,4 +48,13 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Oplo API server running on port ${PORT}`);
+  const domains = process.env.REPLIT_DOMAINS || '';
+  const devDomain = process.env.REPLIT_DEV_DOMAIN || '';
+  const publicUrl = process.env.PUBLIC_URL || '';
+  const firstDomain = domains.split(' ')[0].trim();
+  const resolvedUrl = firstDomain ? `https://${firstDomain}` : devDomain ? `https://${devDomain}` : publicUrl || 'http://localhost:3001';
+  console.error(`[Config] REPLIT_DOMAINS="${domains}"`);
+  console.error(`[Config] REPLIT_DEV_DOMAIN="${devDomain}"`);
+  console.error(`[Config] PUBLIC_URL="${publicUrl}"`);
+  console.error(`[Config] TwiML base URL will be: ${resolvedUrl}`);
 });

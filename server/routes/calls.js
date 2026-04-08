@@ -64,25 +64,31 @@ async function generateCallScript(item, supplier, quantity, language) {
     ? 'Write the script in professional English.'
     : 'Rédige le script en français professionnel.';
 
-  const prompt = `You are writing a professional voicemail/phone call script for a restaurant group purchasing manager calling their supplier.
+  const contactGreeting = supplier.contact_person
+    ? (language === 'en' ? `Good day ${supplier.contact_person},` : `Bonjour ${supplier.contact_person},`)
+    : (language === 'en' ? 'Good day,' : 'Bonjour,');
 
-Details:
+  const prompt = `You are writing a professional automated phone call script for the Oplo restaurant group ordering system. The script will be read aloud by a text-to-speech voice to a supplier.
+
+Order details:
+- Caller identity: Oplo restaurant group (automated ordering system)
 - Supplier company: ${supplier.name}
-- Contact person: ${supplier.contact_person || 'the team'}
 - Item to order: ${item.name}
-- Quantity needed: ${quantity} ${item.unit}
-- Current stock: ${item.current_quantity} ${item.unit} (minimum required: ${item.par_level} ${item.unit})
+- Quantity to order: ${quantity} ${item.unit}
 - Category: ${item.category}
 
 ${langInstruction}
 
-Write a concise, professional phone call script (3-5 sentences) that:
-1. Identifies the caller as from the restaurant group using Oplo.ai ordering system
-2. Clearly states what is being ordered and the quantity
-3. Requests confirmation/callback
-4. Is natural and polite when read aloud by an automated system
+CRITICAL RULES:
+- NEVER use placeholder text like [Name], [Company], [Your Name], or any text inside brackets
+- NEVER use template variables — write the complete, final script with real words only
+- Start directly with: "${contactGreeting}"
+- Identify the caller as "le groupe Oplo" (in French) or "the Oplo restaurant group" (in English)
+- State the order clearly: ${quantity} ${item.unit} of ${item.name}
+- Ask the supplier to confirm the order or call back to confirm
+- Keep it to 3-4 sentences, natural and polite for text-to-speech
 
-Return ONLY the script text, no labels or formatting.`;
+Return ONLY the final spoken script, nothing else.`;
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o',

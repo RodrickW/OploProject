@@ -59,44 +59,52 @@ function normalizePhone(phone) {
   return digits;
 }
 
+function cleanScript(script) {
+  // Remove any bracket placeholders the AI may have generated e.g. [Votre nom]
+  return script
+    .replace(/\[[^\]]*\]/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 async function generateCallScript(item, supplier, quantity, language) {
-  const langInstruction = language === 'en'
-    ? 'Write the script in professional English.'
-    : 'Rédige le script en français professionnel.';
-
+  const isFr = language !== 'en';
+  const groupName = isFr ? 'le groupe Oplo' : 'the Oplo restaurant group';
   const contactGreeting = supplier.contact_person
-    ? (language === 'en' ? `Good day ${supplier.contact_person},` : `Bonjour ${supplier.contact_person},`)
-    : (language === 'en' ? 'Good day,' : 'Bonjour,');
+    ? (isFr ? `Bonjour ${supplier.contact_person},` : `Good day ${supplier.contact_person},`)
+    : (isFr ? 'Bonjour,' : 'Good day,');
 
-  const prompt = `You are writing a professional automated phone call script for the Oplo restaurant group ordering system. The script will be read aloud by a text-to-speech voice to a supplier.
+  const example = isFr
+    ? `Exemple: "Bonjour Sophie Martin, c'est le groupe Oplo. Nous souhaitons commander 10 kg de tomates cerises. Merci de confirmer cette commande ou de nous rappeler. Bonne journée."`
+    : `Example: "Good day John Smith, this is the Oplo restaurant group. We would like to order 10 kg of cherry tomatoes. Please confirm or call us back. Thank you."`;
 
-Order details:
-- Caller identity: Oplo restaurant group (automated ordering system)
-- Supplier company: ${supplier.name}
-- Item to order: ${item.name}
-- Quantity to order: ${quantity} ${item.unit}
-- Category: ${item.category}
+  const prompt = `Write a short automated phone order script (3-4 sentences, spoken aloud by text-to-speech).
 
-${langInstruction}
+Caller: ${groupName}
+Recipient: ${supplier.contact_person || supplier.name} at ${supplier.name}
+Item: ${quantity} ${item.unit} of ${item.name} (${item.category})
+Language: ${isFr ? 'French' : 'English'}
 
-CRITICAL RULES:
-- NEVER use placeholder text like [Name], [Company], [Your Name], or any text inside brackets
-- NEVER use template variables — write the complete, final script with real words only
-- Start directly with: "${contactGreeting}"
-- Identify the caller as "le groupe Oplo" (in French) or "the Oplo restaurant group" (in English)
-- State the order clearly: ${quantity} ${item.unit} of ${item.name}
-- Ask the supplier to confirm the order or call back to confirm
-- Keep it to 3-4 sentences, natural and polite for text-to-speech
+${example}
 
-Return ONLY the final spoken script, nothing else.`;
+Rules:
+- Start with exactly: ${contactGreeting}
+- Say the caller is "${groupName}"
+- State the item and quantity clearly using the real values above
+- Ask them to confirm or call back
+- Write in ${isFr ? 'French' : 'English'} only
+- NO brackets, NO placeholders, NO template variables — use only real words
+
+Return the spoken script only, nothing else.`;
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [{ role: 'user', content: prompt }],
-    max_tokens: 300,
+    max_tokens: 250,
   });
 
-  return response.choices[0]?.message?.content?.trim() || '';
+  const raw = response.choices[0]?.message?.content?.trim() || '';
+  return cleanScript(raw);
 }
 
 // List all calls
@@ -236,7 +244,7 @@ router.all('/twiml/:callId', async (req, res) => {
 
     const call = result.rows[0];
     const lang = call.language === 'en' ? 'en-GB' : 'fr-FR';
-    const voice = call.language === 'en' ? 'Polly.Amy' : 'Polly.Lea';
+    const voice = call.language === 'en' ? 'Polly.Amy' : 'Polly.Celine';
     const safeScript = xmlEscape(call.call_script);
     const goodbye = call.language === 'en'
       ? 'Thank you. This was an automated message from Oplo AI. Goodbye.'

@@ -720,14 +720,45 @@ export default function Inventory() {
                           )}
                         </div>
                       </div>
-                      {call.call_script && (
-                        <div className="mt-3 ml-11 bg-gray-50 rounded-xl p-3 border border-gray-100">
-                          <p className="text-xs text-gray-400 mb-1 flex items-center gap-1">
-                            <Mic className="w-3 h-3" />{isEn ? 'Script read by AI:' : 'Script lu par l\'IA :'}
-                          </p>
-                          <p className="text-sm text-gray-700 italic">"{call.call_script}"</p>
-                        </div>
-                      )}
+                      {(() => {
+                        let history = [];
+                        try { history = JSON.parse(call.conversation_history || '[]'); } catch {}
+                        const hasConversation = history.length > 1;
+                        if (hasConversation) {
+                          return (
+                            <div className="mt-3 ml-11 space-y-2">
+                              <p className="text-xs text-gray-400 flex items-center gap-1">
+                                <Mic className="w-3 h-3" />{isEn ? 'Conversation transcript:' : 'Transcription de l\'appel :'}
+                              </p>
+                              {history.map((msg, i) => (
+                                <div key={i} className={`flex ${msg.role === 'ai' ? 'justify-start' : 'justify-end'}`}>
+                                  <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
+                                    msg.role === 'ai'
+                                      ? 'bg-blue-50 text-blue-900 rounded-tl-sm'
+                                      : 'bg-gray-100 text-gray-800 rounded-tr-sm'
+                                  }`}>
+                                    <p className={`text-[10px] font-medium mb-0.5 ${msg.role === 'ai' ? 'text-blue-400' : 'text-gray-400'}`}>
+                                      {msg.role === 'ai' ? 'Oplo AI' : (isEn ? 'Supplier' : 'Fournisseur')}
+                                    </p>
+                                    <p>"{msg.text}"</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        }
+                        if (call.call_script) {
+                          return (
+                            <div className="mt-3 ml-11 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                              <p className="text-xs text-gray-400 mb-1 flex items-center gap-1">
+                                <Mic className="w-3 h-3" />{isEn ? 'Script read by AI:' : 'Script lu par l\'IA :'}
+                              </p>
+                              <p className="text-sm text-gray-700 italic">"{call.call_script}"</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   );
                 })}

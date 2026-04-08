@@ -29,7 +29,7 @@ function getPublicUrl() {
   return process.env.PUBLIC_URL || 'http://localhost:3001';
 }
 
-// Ensure supplier_calls table exists
+// Ensure supplier_calls table exists and has conversation_history column
 pool.query(`
   CREATE TABLE IF NOT EXISTS supplier_calls (
     id SERIAL PRIMARY KEY,
@@ -49,7 +49,9 @@ pool.query(`
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
   )
-`).catch(err => console.error('Failed to create supplier_calls table:', err));
+`).then(() =>
+  pool.query(`ALTER TABLE supplier_calls ADD COLUMN IF NOT EXISTS conversation_history TEXT DEFAULT '[]'`)
+).catch(err => console.error('Failed to setup supplier_calls table:', err));
 
 function normalizePhone(phone) {
   if (!phone) return phone;
@@ -108,6 +110,50 @@ Return the spoken script only, nothing else.`;
   return cleanScript(raw);
 }
 
+async function generateConversationReply(call, history, latestSupplierMessage) {
+  const isFr = call.language !== 'en';
+  const groupName = isFr ? 'le groupe Oplo' : 'the Oplo restaurant group';
+
+  const systemPrompt = `You are an AI phone assistant calling on behalf of ${groupName}, a restaurant group.
+You placed an order with ${call.supplier_name} for ${call.quantity_ordered} ${call.unit} of ${call.item_name}.
+Your goal: confirm the order professionally and end the call politely.
+
+Guidelines:
+- If supplier confirms → thank them, note any delivery date, then end the call (shouldEnd: true)
+- If supplier asks for details → provide them clearly (item: ${call.item_name}, qty: ${call.quantity_ordered} ${call.unit})
+- If supplier can't fulfill → ask for an alternative date or thank them politely, then end
+- If supplier gives a delivery date → acknowledge it and confirm
+- Keep replies SHORT — 1-2 sentences max, natural spoken language
+- No filler words, no "certainly", no robotic phrases
+- Respond ONLY in ${isFr ? 'French' : 'English'}
+- After at most 4 exchanges, wrap up and end the call
+
+Return ONLY valid JSON: { "reply": "...", "shouldEnd": true/false }`;
+
+  const historyText = history
+    .map(m => `${m.role === 'ai' ? 'Oplo AI' : 'Supplier'}: ${m.text}`)
+    .join('\n');
+
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `Conversation so far:\n${historyText}\n\nSupplier just said: "${latestSupplierMessage}"\n\nRespond as the AI.` },
+    ],
+    max_tokens: 150,
+    response_format: { type: 'json_object' },
+  });
+
+  try {
+    const parsed = JSON.parse(response.choices[0]?.message?.content || '{}');
+    return {
+      reply: cleanScript(parsed.reply || (isFr ? 'Merci. Au revoir.' : 'Thank you. Goodbye.')),
+      shouldEnd: !!parsed.shouldEnd,
+    };
+  } catch {
+    return { reply: isFr ? 'Merci. Au revoir.' : 'Thank you. Goodbye.', shouldEnd: true };
+  }
+}
 
 // List all calls
 router.get('/', async (req, res) => {
@@ -226,6 +272,30 @@ function xmlEscape(str) {
     .replace(/'/g, '&apos;');
 }
 
+function buildSay(text, voice = 'Polly.Amy', lang = 'en-GB') {
+  return `<Say voice="${voice}" language="${lang}">${xmlEscape(text)}</Say>`;
+}
+
+function buildConversationTwiml(callId, replyText, shouldEnd, baseUrl, noSpeechFallback) {
+  const say = buildSay(replyText);
+  if (shouldEnd) {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  ${say}
+  <Pause length="1"/>
+  <Hangup/>
+</Response>`;
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  ${say}
+  <Gather input="speech" timeout="4" speechTimeout="auto" action="${baseUrl}/api/calls/conversation/${callId}" method="POST">
+  </Gather>
+  ${buildSay(noSpeechFallback)}
+  <Hangup/>
+</Response>`;
+}
+
 // TwiML webhook — Twilio calls this to get the call script (handles GET and POST)
 router.all('/twiml/:callId', async (req, res) => {
   console.log(`TwiML requested for call ID: ${req.params.callId}`);
@@ -238,36 +308,108 @@ router.all('/twiml/:callId', async (req, res) => {
       console.error(`TwiML: no call record found for ID ${req.params.callId}`);
       res.type('text/xml');
       return res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<Response><Say language="fr-FR">Désolé, une erreur s&apos;est produite.</Say></Response>`);
+<Response><Say>Sorry, an error occurred.</Say></Response>`);
     }
 
     const call = result.rows[0];
-    const lang = 'en-GB';
-    const voice = 'Polly.Amy';
-    const safeScript = xmlEscape(call.call_script);
-    const goodbye = call.language === 'en'
-      ? 'Thank you. This was an automated message from Oplo AI. Goodbye.'
-      : 'Merci. Ce message automatique vous a été envoyé par Oplo AI. Au revoir.';
+    const baseUrl = getPublicUrl();
+    const isFr = call.language !== 'en';
+    const noSpeechFallback = isFr
+      ? 'Nous n\'avons pas reçu de réponse. Merci, au revoir.'
+      : 'We did not receive a response. Thank you, goodbye.';
 
-    console.log(`TwiML serving: lang=${lang}, voice=${voice}, script length=${safeScript.length}`);
+    // Save opening AI message to conversation history
+    const openingHistory = JSON.stringify([{ role: 'ai', text: call.call_script }]);
+    await pool.query(
+      'UPDATE supplier_calls SET status = $1, conversation_history = $2 WHERE id = $3',
+      ['in-progress', openingHistory, call.id]
+    );
+
+    console.log(`TwiML serving conversational call ${call.id}, lang=${call.language}`);
 
     res.type('text/xml');
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say language="${lang}" voice="${voice}">${safeScript}</Say>
-  <Pause length="2"/>
-  <Say language="${lang}" voice="${voice}">${goodbye}</Say>
+  ${buildSay(call.call_script)}
+  <Gather input="speech" timeout="4" speechTimeout="auto" action="${baseUrl}/api/calls/conversation/${call.id}" method="POST">
+  </Gather>
+  ${buildSay(noSpeechFallback)}
+  <Hangup/>
 </Response>`);
-
-    await pool.query(
-      'UPDATE supplier_calls SET status = $1 WHERE id = $2 AND status = $3',
-      ['in-progress', call.id, 'initiated']
-    );
   } catch (err) {
     console.error('TwiML error:', err);
     res.type('text/xml');
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response><Say>An error occurred. Please try again.</Say></Response>`);
+  }
+});
+
+// Conversation webhook — called by Twilio after each supplier response
+router.post('/conversation/:callId', async (req, res) => {
+  const { callId } = req.params;
+  const supplierSpeech = req.body.SpeechResult || '';
+  console.log(`[Conversation] Call ${callId} — Supplier said: "${supplierSpeech}"`);
+
+  try {
+    const result = await pool.query('SELECT * FROM supplier_calls WHERE id = $1', [callId]);
+    if (!result.rows.length) {
+      res.type('text/xml');
+      return res.send(`<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>`);
+    }
+
+    const call = result.rows[0];
+    const baseUrl = getPublicUrl();
+    const isFr = call.language !== 'en';
+    const history = JSON.parse(call.conversation_history || '[]');
+
+    // If no speech was detected, end politely
+    if (!supplierSpeech.trim()) {
+      const noReply = isFr
+        ? 'Je n\'ai pas entendu de réponse. Merci, bonne journée.'
+        : 'I didn\'t catch that. Thank you for your time, goodbye.';
+      history.push({ role: 'ai', text: noReply });
+      await pool.query('UPDATE supplier_calls SET conversation_history = $1 WHERE id = $2', [JSON.stringify(history), callId]);
+      res.type('text/xml');
+      return res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  ${buildSay(noReply)}
+  <Pause length="1"/>
+  <Hangup/>
+</Response>`);
+    }
+
+    // Add supplier message to history
+    history.push({ role: 'supplier', text: supplierSpeech });
+
+    // Cap conversation at 5 AI turns
+    const aiTurns = history.filter(m => m.role === 'ai').length;
+    const forceEnd = aiTurns >= 5;
+
+    const { reply, shouldEnd } = forceEnd
+      ? { reply: isFr ? 'Merci pour votre temps. Au revoir.' : 'Thank you for your time. Goodbye.', shouldEnd: true }
+      : await generateConversationReply(call, history, supplierSpeech);
+
+    history.push({ role: 'ai', text: reply });
+
+    await pool.query(
+      'UPDATE supplier_calls SET conversation_history = $1 WHERE id = $2',
+      [JSON.stringify(history), callId]
+    );
+
+    const noSpeechFallback = isFr
+      ? 'Merci pour votre temps. Au revoir.'
+      : 'Thank you for your time. Goodbye.';
+
+    res.type('text/xml');
+    res.send(buildConversationTwiml(callId, reply, shouldEnd || forceEnd, baseUrl, noSpeechFallback));
+  } catch (err) {
+    console.error('Conversation error:', err);
+    res.type('text/xml');
+    res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  ${buildSay('Thank you. Goodbye.')}
+  <Hangup/>
+</Response>`);
   }
 });
 

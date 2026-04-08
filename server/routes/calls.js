@@ -185,31 +185,47 @@ router.post('/initiate', async (req, res) => {
   }
 });
 
+function xmlEscape(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 // TwiML webhook — Twilio calls this to get the call script
 router.get('/twiml/:callId', async (req, res) => {
+  console.log(`TwiML requested for call ID: ${req.params.callId}`);
   try {
     const result = await pool.query(
       'SELECT * FROM supplier_calls WHERE id = $1',
       [req.params.callId]
     );
     if (!result.rows.length) {
+      console.error(`TwiML: no call record found for ID ${req.params.callId}`);
       res.type('text/xml');
       return res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<Response><Say language="fr-FR">Désolé, une erreur s'est produite.</Say></Response>`);
+<Response><Say language="fr-FR">Désolé, une erreur s&apos;est produite.</Say></Response>`);
     }
 
     const call = result.rows[0];
     const lang = call.language === 'en' ? 'en-GB' : 'fr-FR';
-    const voiceGender = call.language === 'en' ? 'Polly.Amy' : 'Polly.Léa';
+    const voice = call.language === 'en' ? 'Polly.Amy' : 'Polly.Lea';
+    const safeScript = xmlEscape(call.call_script);
+    const goodbye = call.language === 'en'
+      ? 'Thank you. This was an automated message from Oplo AI. Goodbye.'
+      : 'Merci. Ce message automatique vous a &eacute;t&eacute; envoy&eacute; par Oplo AI. Au revoir.';
+
+    console.log(`TwiML serving: lang=${lang}, voice=${voice}, script length=${safeScript.length}`);
 
     res.type('text/xml');
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say language="${lang}" voice="${voiceGender}">${call.call_script}</Say>
+  <Say language="${lang}" voice="${voice}">${safeScript}</Say>
   <Pause length="2"/>
-  <Say language="${lang}" voice="${voiceGender}">${call.language === 'en'
-    ? 'Thank you. This was an automated message from Oplo AI. Goodbye.'
-    : 'Merci. Ce message automatique vous a été envoyé par Oplo AI. Au revoir.'}</Say>
+  <Say language="${lang}" voice="${voice}">${goodbye}</Say>
 </Response>`);
 
     await pool.query(

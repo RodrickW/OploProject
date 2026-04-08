@@ -244,7 +244,7 @@ router.all('/twiml/:callId', async (req, res) => {
 
     const call = result.rows[0];
     const lang = call.language === 'en' ? 'en-GB' : 'fr-FR';
-    const voice = call.language === 'en' ? 'Polly.Amy' : 'Polly.Celine';
+    const voice = call.language === 'en' ? 'Polly.Amy' : 'alice';
     const safeScript = xmlEscape(call.call_script);
     const goodbye = call.language === 'en'
       ? 'Thank you. This was an automated message from Oplo AI. Goodbye.'

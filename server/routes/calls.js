@@ -125,6 +125,7 @@ router.post('/initiate', async (req, res) => {
     });
   }
 
+  let callRecordId = null;
   try {
     // Fetch item + supplier
     const itemRes = await pool.query(
@@ -158,6 +159,7 @@ router.post('/initiate', async (req, res) => {
       [item_id, item.supplier_id, item.name, item.supplier_name, normalizedPhone, script, language, qty, item.unit]
     );
     const callRecord = callRes.rows[0];
+    callRecordId = callRecord.id;
 
     // Initiate Twilio call
     const client = getTwilioClient();
@@ -192,6 +194,14 @@ router.post('/initiate', async (req, res) => {
     });
   } catch (err) {
     console.error('Call initiation error:', err);
+    if (callRecordId) {
+      try {
+        await pool.query(
+          `UPDATE supplier_calls SET status = 'failed', error_message = $1 WHERE id = $2`,
+          [err.message, callRecordId]
+        );
+      } catch (_) {}
+    }
     res.status(500).json({ error: err.message });
   }
 });

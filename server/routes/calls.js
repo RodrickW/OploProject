@@ -206,8 +206,8 @@ function xmlEscape(str) {
     .replace(/'/g, '&apos;');
 }
 
-// TwiML webhook — Twilio calls this to get the call script
-router.get('/twiml/:callId', async (req, res) => {
+// TwiML webhook — Twilio calls this to get the call script (handles GET and POST)
+router.all('/twiml/:callId', async (req, res) => {
   console.log(`TwiML requested for call ID: ${req.params.callId}`);
   try {
     const result = await pool.query(

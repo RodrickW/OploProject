@@ -162,11 +162,16 @@ router.post('/initiate', async (req, res) => {
     // Initiate Twilio call
     const client = getTwilioClient();
     const publicUrl = getPublicUrl();
+    const fromNumber = normalizePhone(process.env.TWILIO_PHONE_NUMBER);
     const twimlUrl = `${publicUrl}/api/calls/twiml/${callRecord.id}`;
     const statusCallbackUrl = `${publicUrl}/api/calls/status-callback`;
+
+    console.log(`[Call] FROM: ${fromNumber} → TO: ${normalizedPhone}`);
+    console.log(`[Call] TwiML URL: ${twimlUrl}`);
+
     const twilioCall = await client.calls.create({
       to: normalizedPhone,
-      from: process.env.TWILIO_PHONE_NUMBER,
+      from: fromNumber,
       url: twimlUrl,
       statusCallback: statusCallbackUrl,
       statusCallbackMethod: 'POST',

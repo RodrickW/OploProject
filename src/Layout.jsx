@@ -28,8 +28,7 @@ import {
   Menu,
   X,
   Sparkles,
-  Plug,
-  Boxes
+  Plug
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -63,7 +62,6 @@ export default function Layout({ children, currentPageName }) {
     { name: t.nav.dashboard, icon: LayoutDashboard, page: 'Dashboard' },
     { name: t.nav.oploAI, icon: Sparkles, page: 'OploChat', highlight: true },
     { name: t.nav.insights, icon: Lightbulb, page: 'Insights' },
-    { name: t.nav.inventory, icon: Boxes, page: 'Inventory' },
   ];
 
   const compastNav = [

@@ -12,7 +12,8 @@ import {
   TrendingUp,
   Clock,
   CheckCircle,
-  Circle
+  Circle,
+  Boxes
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ import ProblemCalendar from '@/components/operations/ProblemCalendar';
 import SOPManager from '@/components/operations/SOPManager';
 import KPIDashboard from '@/components/operations/KPIDashboard';
 import GovernanceRituals from '@/components/operations/GovernanceRituals';
+import Inventory from './Inventory';
 
 const priorityColors = {
   critical: 'bg-red-100 text-red-700 border-red-300',
@@ -50,6 +52,7 @@ export default function Operations() {
     { id: 'kpis', label: 'KPIs', icon: TrendingUp },
     { id: 'sops', label: 'SOPs', icon: ListTodo },
     { id: 'problems', label: isEn ? 'Issues' : 'Problèmes', icon: AlertCircle },
+    { id: 'inventory', label: isEn ? 'Inventory' : 'Inventaire', icon: Boxes },
   ];
 
   const { data: problems = [], isLoading } = useQuery({
@@ -150,6 +153,10 @@ export default function Operations() {
 
         <TabsContent value="governance" className="mt-6">
           <GovernanceRituals />
+        </TabsContent>
+
+        <TabsContent value="inventory" className="mt-6">
+          <Inventory />
         </TabsContent>
       </Tabs>
     </div>

@@ -258,17 +258,28 @@ export default function Inventory() {
 
   const createSupplier = useMutation({
     mutationFn: data => fetch('/api/suppliers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(r => r.json()),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['/api/suppliers'] }); setSupplierModal(null); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['/api/suppliers'] });
+      qc.invalidateQueries({ queryKey: ['/api/inventory'] });
+      setSupplierModal(null);
+    },
   });
 
   const updateSupplier = useMutation({
     mutationFn: ({ id, data }) => fetch(`/api/suppliers/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }).then(r => r.json()),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['/api/suppliers'] }); setSupplierModal(null); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['/api/suppliers'] });
+      qc.invalidateQueries({ queryKey: ['/api/inventory'] });
+      setSupplierModal(null);
+    },
   });
 
   const deleteSupplier = useMutation({
     mutationFn: id => fetch(`/api/suppliers/${id}`, { method: 'DELETE' }).then(r => r.json()),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['/api/suppliers'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['/api/suppliers'] });
+      qc.invalidateQueries({ queryKey: ['/api/inventory'] });
+    },
   });
 
   const placeOrder = useMutation({

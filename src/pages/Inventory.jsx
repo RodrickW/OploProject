@@ -214,6 +214,7 @@ export default function Inventory() {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [seeding, setSeeding] = useState(false);
   const [orderQty, setOrderQty] = useState('');
+  const [orderError, setOrderError] = useState('');
   const [callModal, setCallModal] = useState(null);
   const [previewedScript, setPreviewedScript] = useState('');
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -271,8 +272,25 @@ export default function Inventory() {
   });
 
   const placeOrder = useMutation({
-    mutationFn: ({ id, qty }) => fetch(`/api/inventory/${id}/order`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quantity_ordered: parseFloat(qty) }) }).then(r => r.json()),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['/api/inventory/orders'] }); setOrderingItem(null); setOrderQty(''); },
+    mutationFn: async ({ id, qty }) => {
+      const r = await fetch(`/api/inventory/${id}/order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity_ordered: parseFloat(qty) }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error || `Erreur ${r.status}`);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['/api/inventory/orders'] });
+      setOrderingItem(null);
+      setOrderQty('');
+      setOrderError('');
+    },
+    onError: (err) => {
+      setOrderError(err.message);
+    },
   });
 
   const initiateCall = useMutation({
@@ -487,7 +505,7 @@ export default function Inventory() {
                             <div className="flex items-center justify-end gap-1">
                               {status !== 'ok' && (
                                 <>
-                                  <Button size="sm" variant="outline" className="gap-1 text-xs border-indigo-300 text-indigo-600 hover:bg-indigo-50 h-8" onClick={() => { setOrderingItem(item); setOrderQty(String(item.par_level - item.current_quantity)); }} data-testid={`button-order-${item.id}`}>
+                                  <Button size="sm" variant="outline" className="gap-1 text-xs border-indigo-300 text-indigo-600 hover:bg-indigo-50 h-8" onClick={() => { setOrderingItem(item); setOrderQty(String(Math.max(item.par_level - item.current_quantity, 1))); setOrderError(''); }} data-testid={`button-order-${item.id}`}>
                                     <ShoppingCart className="w-3 h-3" />{isEn ? 'Order' : 'Commander'}
                                   </Button>
                                   {item.supplier_phone && (
@@ -750,7 +768,7 @@ export default function Inventory() {
       </Dialog>
 
       {/* Order Confirmation Modal */}
-      <Dialog open={!!orderingItem} onOpenChange={() => setOrderingItem(null)}>
+      <Dialog open={!!orderingItem} onOpenChange={() => { setOrderingItem(null); setOrderError(''); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -776,8 +794,14 @@ export default function Inventory() {
                   <p className="italic">"{isEn ? `Hello, this is an order from Oplo Restaurant. We would like to order ${orderQty} ${orderingItem.unit} of ${orderingItem.name}. Please confirm.` : `Bonjour, je vous contacte de la part d'Oplo Restaurant. Nous souhaitons commander ${orderQty} ${orderingItem.unit} de ${orderingItem.name}. Merci de confirmer.`}"</p>
                 </div>
               )}
+              {orderError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 flex items-start gap-2">
+                  <XCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>{orderError}</span>
+                </div>
+              )}
               <DialogFooter>
-                <Button variant="outline" onClick={() => setOrderingItem(null)} data-testid="button-cancel-order">{isEn ? 'Cancel' : 'Annuler'}</Button>
+                <Button variant="outline" onClick={() => { setOrderingItem(null); setOrderError(''); }} data-testid="button-cancel-order">{isEn ? 'Cancel' : 'Annuler'}</Button>
                 <Button onClick={() => placeOrder.mutate({ id: orderingItem.id, qty: orderQty })} disabled={!orderQty || placeOrder.isPending} className="bg-indigo-600 hover:bg-indigo-700" data-testid="button-confirm-order">
                   {placeOrder.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
                   {isEn ? 'Confirm Order' : 'Confirmer la commande'}

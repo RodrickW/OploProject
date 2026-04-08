@@ -18,8 +18,13 @@ function getTwilioClient() {
 }
 
 function getPublicUrl() {
-  const domain = process.env.REPLIT_DEV_DOMAIN;
-  if (domain) return `https://${domain}`;
+  // Production deployment domain (space-separated list, take first)
+  if (process.env.REPLIT_DOMAINS) {
+    const first = process.env.REPLIT_DOMAINS.split(' ')[0].trim();
+    if (first) return `https://${first}`;
+  }
+  // Development domain
+  if (process.env.REPLIT_DEV_DOMAIN) return `https://${process.env.REPLIT_DEV_DOMAIN}`;
   return process.env.PUBLIC_URL || 'http://localhost:3001';
 }
 

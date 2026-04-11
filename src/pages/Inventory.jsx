@@ -316,7 +316,7 @@ export default function Inventory() {
         return data;
       }),
     onSuccess: (data) => {
-      setCallStatus({ type: 'success', callId: data.id, sid: data.twilio_call_sid });
+      setCallStatus({ type: 'success', callId: data.id, sid: data.retell_call_id });
       qc.invalidateQueries({ queryKey: ['/api/calls'] });
     },
     onError: (err) => {
@@ -646,7 +646,7 @@ export default function Inventory() {
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <div>
                 <h2 className="font-semibold text-gray-800">{isEn ? 'AI Supplier Call History' : 'Historique des appels IA fournisseurs'}</h2>
-                <p className="text-xs text-gray-400 mt-0.5">{isEn ? 'Automated calls placed via Twilio + OpenAI' : 'Appels automatisés via Twilio + OpenAI'}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{isEn ? 'Automated calls placed via Retell AI' : 'Appels automatisés via Retell AI'}</p>
               </div>
               {calls.filter(c => ['initiated','ringing','in-progress'].includes(c.status)).length > 0 && (
                 <div className="flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 rounded-xl text-sm">
@@ -911,7 +911,7 @@ export default function Inventory() {
                       <PhoneCall className="w-4 h-4 mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="font-semibold">{isEn ? 'Call initiated!' : 'Appel lancé !'}</p>
-                        <p className="text-xs mt-0.5 opacity-80">{isEn ? 'Twilio is placing the call now. Check the "AI Calls" tab for status.' : 'Twilio passe l\'appel maintenant. Consultez l\'onglet "Appels IA" pour le suivi.'}</p>
+                        <p className="text-xs mt-0.5 opacity-80">{isEn ? 'Retell AI is placing the call now. Check the "AI Calls" tab for status.' : 'Retell AI passe l\'appel maintenant. Consultez l\'onglet "Appels IA" pour le suivi.'}</p>
                       </div>
                     </>
                   ) : (

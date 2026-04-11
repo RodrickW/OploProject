@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { pool } from '../db.js';
 import OpenAI from 'openai';
-import twilio from 'twilio';
+import Retell from 'retell-sdk';
 
 const router = Router();
 
@@ -10,26 +10,21 @@ const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
-
-function getTwilioClient() {
-  const sid = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
-  if (!sid || !token) throw new Error('Twilio credentials not configured');
-  return twilio(sid, token);
+function getRetellClient() {
+  if (!process.env.RETELL_API_KEY) throw new Error('RETELL_API_KEY not configured');
+  return new Retell({ apiKey: process.env.RETELL_API_KEY });
 }
 
 function getPublicUrl() {
-  // Production deployment domain (space-separated list, take first)
   if (process.env.REPLIT_DOMAINS) {
     const first = process.env.REPLIT_DOMAINS.split(' ')[0].trim();
     if (first) return `https://${first}`;
   }
-  // Development domain
   if (process.env.REPLIT_DEV_DOMAIN) return `https://${process.env.REPLIT_DEV_DOMAIN}`;
   return process.env.PUBLIC_URL || 'http://localhost:3001';
 }
 
-// Ensure supplier_calls table exists and has conversation_history column
+// Ensure supplier_calls table exists with all required columns
 pool.query(`
   CREATE TABLE IF NOT EXISTS supplier_calls (
     id SERIAL PRIMARY KEY,
@@ -39,17 +34,20 @@ pool.query(`
     supplier_name VARCHAR(255),
     supplier_phone VARCHAR(100),
     call_script TEXT,
-    twilio_call_sid VARCHAR(100),
+    retell_call_id TEXT,
     status VARCHAR(50) DEFAULT 'pending',
     language VARCHAR(5) DEFAULT 'fr',
     quantity_ordered NUMERIC,
     unit VARCHAR(50),
     duration INTEGER,
     error_message TEXT,
+    conversation_history TEXT DEFAULT '[]',
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
   )
 `).then(() =>
+  pool.query(`ALTER TABLE supplier_calls ADD COLUMN IF NOT EXISTS retell_call_id TEXT`)
+).then(() =>
   pool.query(`ALTER TABLE supplier_calls ADD COLUMN IF NOT EXISTS conversation_history TEXT DEFAULT '[]'`)
 ).catch(err => console.error('Failed to setup supplier_calls table:', err));
 
@@ -63,13 +61,13 @@ function normalizePhone(phone) {
 }
 
 function cleanScript(script) {
-  // Remove any bracket placeholders the AI may have generated e.g. [Votre nom]
   return script
     .replace(/\[[^\]]*\]/g, '')
     .replace(/\s{2,}/g, ' ')
     .trim();
 }
 
+// Generate a preview script (shown in the UI before the call — Retell handles the real conversation)
 async function generateCallScript(item, supplier, quantity, language) {
   const isFr = language !== 'en';
   const groupName = isFr ? 'le groupe Oplo' : 'the Oplo restaurant group';
@@ -81,7 +79,7 @@ async function generateCallScript(item, supplier, quantity, language) {
     ? `Exemple: "Bonjour Sophie Martin, c'est le groupe Oplo. Nous souhaitons commander 10 kg de tomates cerises. Merci de confirmer cette commande ou de nous rappeler. Bonne journée."`
     : `Example: "Good day John Smith, this is the Oplo restaurant group. We would like to order 10 kg of cherry tomatoes. Please confirm or call us back. Thank you."`;
 
-  const prompt = `Write a short automated phone order script (3-4 sentences, spoken aloud by text-to-speech).
+  const prompt = `Write a short phone order opening script (2-3 sentences, spoken aloud).
 
 Caller: ${groupName}
 Recipient: ${supplier.contact_person || supplier.name} at ${supplier.name}
@@ -93,67 +91,43 @@ ${example}
 Rules:
 - Start with exactly: ${contactGreeting}
 - Say the caller is "${groupName}"
-- State the item and quantity clearly using the real values above
-- Ask them to confirm or call back
+- State the item and quantity clearly
+- NO brackets, NO placeholders — use only real words
 - Write in ${isFr ? 'French' : 'English'} only
-- NO brackets, NO placeholders, NO template variables — use only real words
 
 Return the spoken script only, nothing else.`;
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o',
     messages: [{ role: 'user', content: prompt }],
-    max_tokens: 250,
+    max_tokens: 200,
   });
 
   const raw = response.choices[0]?.message?.content?.trim() || '';
   return cleanScript(raw);
 }
 
-async function generateConversationReply(call, history, latestSupplierMessage) {
-  const isFr = call.language !== 'en';
-  const groupName = isFr ? 'le groupe Oplo' : 'the Oplo restaurant group';
-
-  const systemPrompt = `You are an AI phone assistant calling on behalf of ${groupName}, a restaurant group.
-You placed an order with ${call.supplier_name} for ${call.quantity_ordered} ${call.unit} of ${call.item_name}.
-Your goal: confirm the order professionally and end the call politely.
-
-Guidelines:
-- If supplier confirms → thank them, note any delivery date, then end the call (shouldEnd: true)
-- If supplier asks for details → provide them clearly (item: ${call.item_name}, qty: ${call.quantity_ordered} ${call.unit})
-- If supplier can't fulfill → ask for an alternative date or thank them politely, then end
-- If supplier gives a delivery date → acknowledge it and confirm
-- Keep replies SHORT — 1-2 sentences max, natural spoken language
-- No filler words, no "certainly", no robotic phrases
-- Respond ONLY in ${isFr ? 'French' : 'English'}
-- After at most 4 exchanges, wrap up and end the call
-
-Return ONLY valid JSON: { "reply": "...", "shouldEnd": true/false }`;
-
-  const historyText = history
-    .map(m => `${m.role === 'ai' ? 'Oplo AI' : 'Supplier'}: ${m.text}`)
-    .join('\n');
-
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: `Conversation so far:\n${historyText}\n\nSupplier just said: "${latestSupplierMessage}"\n\nRespond as the AI.` },
-    ],
-    max_tokens: 150,
-    response_format: { type: 'json_object' },
-  });
-
-  try {
-    const parsed = JSON.parse(response.choices[0]?.message?.content || '{}');
-    return {
-      reply: cleanScript(parsed.reply || (isFr ? 'Merci. Au revoir.' : 'Thank you. Goodbye.')),
-      shouldEnd: !!parsed.shouldEnd,
-    };
-  } catch {
-    return { reply: isFr ? 'Merci. Au revoir.' : 'Thank you. Goodbye.', shouldEnd: true };
-  }
+// Parse Retell transcript_object into our conversation history format
+function parseTranscript(transcriptObject) {
+  if (!Array.isArray(transcriptObject)) return [];
+  return transcriptObject.map(msg => ({
+    role: msg.role === 'agent' ? 'ai' : 'supplier',
+    text: msg.content || '',
+  })).filter(m => m.text.trim());
 }
+
+// Map Retell call status to our internal status
+function mapRetellStatus(retellStatus) {
+  const map = {
+    registered: 'initiated',
+    ongoing: 'in-progress',
+    ended: 'completed',
+    error: 'failed',
+  };
+  return map[retellStatus] || retellStatus;
+}
+
+// ─── Routes ───────────────────────────────────────────────────────────────────
 
 // List all calls
 router.get('/', async (req, res) => {
@@ -167,17 +141,16 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Initiate a call to a supplier for a low-stock item
+// Initiate a conversational call to a supplier via Retell AI
 router.post('/initiate', async (req, res) => {
   const { item_id, quantity, language = 'fr' } = req.body;
 
   if (!item_id) return res.status(400).json({ error: 'item_id required' });
 
-  // Check Twilio config
-  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
+  if (!process.env.RETELL_API_KEY || !process.env.RETELL_AGENT_ID || !process.env.RETELL_PHONE_NUMBER) {
     return res.status(503).json({
-      error: 'Twilio not configured',
-      message: 'TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_PHONE_NUMBER must be set'
+      error: 'Retell not configured',
+      message: 'RETELL_API_KEY, RETELL_AGENT_ID and RETELL_PHONE_NUMBER must be set',
     });
   }
 
@@ -198,10 +171,11 @@ router.post('/initiate', async (req, res) => {
       return res.status(400).json({ error: 'Supplier has no phone number configured' });
     }
 
-    const qty = quantity || Math.max(item.par_level - item.current_quantity, 1);
+    const qty = quantity || Math.max((item.par_level || 0) - (item.current_quantity || 0), 1);
     const normalizedPhone = normalizePhone(item.supplier_phone);
+    const fromNumber = normalizePhone(process.env.RETELL_PHONE_NUMBER);
 
-    // Generate call script with OpenAI
+    // Generate preview script (shown in UI — the AI agent handles the real conversation)
     const script = await generateCallScript(item, {
       name: item.supplier_name,
       contact_person: item.contact_person,
@@ -217,34 +191,34 @@ router.post('/initiate', async (req, res) => {
     const callRecord = callRes.rows[0];
     callRecordId = callRecord.id;
 
-    // Initiate Twilio call
-    const client = getTwilioClient();
-    const baseUrl = getPublicUrl();
-    const fromNumber = normalizePhone(process.env.TWILIO_PHONE_NUMBER);
-    const twimlUrl = `${baseUrl}/api/calls/twiml/${callRecord.id}`;
-    const statusCallbackUrl = `${baseUrl}/api/calls/status-callback`;
-
-    console.error(`[Call] FROM: ${fromNumber} → TO: ${normalizedPhone}`);
-    console.error(`[Call] TwiML URL: ${twimlUrl}`);
-
-    const twilioCall = await client.calls.create({
-      to: normalizedPhone,
-      from: fromNumber,
-      url: twimlUrl,
-      statusCallback: statusCallbackUrl,
-      statusCallbackMethod: 'POST',
-      statusCallbackEvent: ['initiated', 'ringing', 'answered', 'completed'],
+    // Initiate call via Retell AI
+    const retell = getRetellClient();
+    const retellCall = await retell.call.createPhoneCall({
+      from_number: fromNumber,
+      to_number: normalizedPhone,
+      agent_id: process.env.RETELL_AGENT_ID,
+      retell_llm_dynamic_variables: {
+        supplier_name: item.supplier_name || '',
+        contact_person: item.contact_person || '',
+        item_name: item.name || '',
+        quantity: String(qty),
+        unit: item.unit || '',
+        language: language === 'en' ? 'English' : 'French',
+      },
+      metadata: { call_record_id: String(callRecord.id) },
     });
 
-    // Update with Twilio call SID
+    console.log(`[Retell] Call created: ${retellCall.call_id} → ${normalizedPhone}`);
+
+    // Update record with Retell call ID
     await pool.query(
-      'UPDATE supplier_calls SET twilio_call_sid = $1, status = $2 WHERE id = $3',
-      [twilioCall.sid, 'initiated', callRecord.id]
+      'UPDATE supplier_calls SET retell_call_id = $1, status = $2 WHERE id = $3',
+      [retellCall.call_id, 'initiated', callRecord.id]
     );
 
     res.json({
       ...callRecord,
-      twilio_call_sid: twilioCall.sid,
+      retell_call_id: retellCall.call_id,
       status: 'initiated',
       script,
     });
@@ -262,199 +236,57 @@ router.post('/initiate', async (req, res) => {
   }
 });
 
-function xmlEscape(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-function buildSay(text, voice = 'Polly.Amy', lang = 'en-GB') {
-  return `<Say voice="${voice}" language="${lang}">${xmlEscape(text)}</Say>`;
-}
-
-function buildConversationTwiml(callId, replyText, shouldEnd, baseUrl, noSpeechFallback) {
-  const say = buildSay(replyText);
-  if (shouldEnd) {
-    return `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  ${say}
-  <Pause length="1"/>
-  <Hangup/>
-</Response>`;
-  }
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  ${say}
-  <Gather input="speech" timeout="4" speechTimeout="auto" action="${baseUrl}/api/calls/conversation/${callId}" method="POST">
-  </Gather>
-  ${buildSay(noSpeechFallback)}
-  <Hangup/>
-</Response>`;
-}
-
-// TwiML webhook — Twilio calls this to get the call script (handles GET and POST)
-router.all('/twiml/:callId', async (req, res) => {
-  console.log(`TwiML requested for call ID: ${req.params.callId}`);
-  try {
-    const result = await pool.query(
-      'SELECT * FROM supplier_calls WHERE id = $1',
-      [req.params.callId]
-    );
-    if (!result.rows.length) {
-      console.error(`TwiML: no call record found for ID ${req.params.callId}`);
-      res.type('text/xml');
-      return res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<Response><Say>Sorry, an error occurred.</Say></Response>`);
-    }
-
-    const call = result.rows[0];
-    const baseUrl = getPublicUrl();
-    const isFr = call.language !== 'en';
-    const noSpeechFallback = isFr
-      ? 'Nous n\'avons pas reçu de réponse. Merci, au revoir.'
-      : 'We did not receive a response. Thank you, goodbye.';
-
-    // Save opening AI message to conversation history
-    const openingHistory = JSON.stringify([{ role: 'ai', text: call.call_script }]);
-    await pool.query(
-      'UPDATE supplier_calls SET status = $1, conversation_history = $2 WHERE id = $3',
-      ['in-progress', openingHistory, call.id]
-    );
-
-    console.log(`TwiML serving conversational call ${call.id}, lang=${call.language}`);
-
-    res.type('text/xml');
-    res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  ${buildSay(call.call_script)}
-  <Gather input="speech" timeout="4" speechTimeout="auto" action="${baseUrl}/api/calls/conversation/${call.id}" method="POST">
-  </Gather>
-  ${buildSay(noSpeechFallback)}
-  <Hangup/>
-</Response>`);
-  } catch (err) {
-    console.error('TwiML error:', err);
-    res.type('text/xml');
-    res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<Response><Say>An error occurred. Please try again.</Say></Response>`);
-  }
-});
-
-// Conversation webhook — called by Twilio after each supplier response
-router.post('/conversation/:callId', async (req, res) => {
-  const { callId } = req.params;
-  const supplierSpeech = req.body.SpeechResult || '';
-  console.log(`[Conversation] Call ${callId} — Supplier said: "${supplierSpeech}"`);
+// Retell webhook — receives call events (call_started, call_ended, call_analyzed)
+router.post('/retell-webhook', async (req, res) => {
+  const { event, data } = req.body;
+  console.log(`[Retell Webhook] event=${event} call_id=${data?.call_id}`);
 
   try {
-    const result = await pool.query('SELECT * FROM supplier_calls WHERE id = $1', [callId]);
-    if (!result.rows.length) {
-      res.type('text/xml');
-      return res.send(`<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>`);
+    if (!data?.call_id) return res.status(200).send('OK');
+
+    // Find our DB record by retell_call_id or metadata
+    const callRecordId = data.metadata?.call_record_id;
+    let dbResult;
+
+    if (callRecordId) {
+      dbResult = await pool.query('SELECT id FROM supplier_calls WHERE id = $1', [callRecordId]);
+    }
+    if (!dbResult?.rows?.length) {
+      dbResult = await pool.query('SELECT id FROM supplier_calls WHERE retell_call_id = $1', [data.call_id]);
+    }
+    if (!dbResult?.rows?.length) {
+      console.warn(`[Retell Webhook] No DB record found for call_id=${data.call_id}`);
+      return res.status(200).send('OK');
     }
 
-    const call = result.rows[0];
-    const baseUrl = getPublicUrl();
-    const isFr = call.language !== 'en';
-    const history = JSON.parse(call.conversation_history || '[]');
+    const recordId = dbResult.rows[0].id;
 
-    // If no speech was detected, end politely
-    if (!supplierSpeech.trim()) {
-      const noReply = isFr
-        ? 'Je n\'ai pas entendu de réponse. Merci, bonne journée.'
-        : 'I didn\'t catch that. Thank you for your time, goodbye.';
-      history.push({ role: 'ai', text: noReply });
-      await pool.query('UPDATE supplier_calls SET conversation_history = $1 WHERE id = $2', [JSON.stringify(history), callId]);
-      res.type('text/xml');
-      return res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  ${buildSay(noReply)}
-  <Pause length="1"/>
-  <Hangup/>
-</Response>`);
-    }
-
-    // Add supplier message to history
-    history.push({ role: 'supplier', text: supplierSpeech });
-
-    // Cap conversation at 5 AI turns
-    const aiTurns = history.filter(m => m.role === 'ai').length;
-    const forceEnd = aiTurns >= 5;
-
-    const { reply, shouldEnd } = forceEnd
-      ? { reply: isFr ? 'Merci pour votre temps. Au revoir.' : 'Thank you for your time. Goodbye.', shouldEnd: true }
-      : await generateConversationReply(call, history, supplierSpeech);
-
-    history.push({ role: 'ai', text: reply });
-
-    await pool.query(
-      'UPDATE supplier_calls SET conversation_history = $1 WHERE id = $2',
-      [JSON.stringify(history), callId]
-    );
-
-    const noSpeechFallback = isFr
-      ? 'Merci pour votre temps. Au revoir.'
-      : 'Thank you for your time. Goodbye.';
-
-    res.type('text/xml');
-    res.send(buildConversationTwiml(callId, reply, shouldEnd || forceEnd, baseUrl, noSpeechFallback));
-  } catch (err) {
-    console.error('Conversation error:', err);
-    res.type('text/xml');
-    res.send(`<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  ${buildSay('Thank you. Goodbye.')}
-  <Hangup/>
-</Response>`);
-  }
-});
-
-// Twilio status callback webhook
-router.post('/status-callback', async (req, res) => {
-  const { CallSid, CallStatus, CallDuration } = req.body;
-
-  const statusMap = {
-    'initiated': 'initiated',
-    'ringing': 'ringing',
-    'in-progress': 'in-progress',
-    'completed': 'completed',
-    'failed': 'failed',
-    'busy': 'busy',
-    'no-answer': 'no-answer',
-  };
-
-  try {
-    if (CallSid) {
+    if (event === 'call_started') {
       await pool.query(
-        `UPDATE supplier_calls
-         SET status = $1, duration = $2, updated_at = NOW()
-         WHERE twilio_call_sid = $3`,
-        [statusMap[CallStatus] || CallStatus, CallDuration || null, CallSid]
+        'UPDATE supplier_calls SET status = $1, updated_at = NOW() WHERE id = $2',
+        ['in-progress', recordId]
       );
     }
-    res.status(200).send('OK');
-  } catch (err) {
-    console.error('Status callback error:', err);
-    res.status(500).send('Error');
-  }
-});
 
-// Get a single call record
-router.get('/:id', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT * FROM supplier_calls WHERE id = $1',
-      [req.params.id]
-    );
-    if (!result.rows.length) return res.status(404).json({ error: 'Not found' });
-    res.json(result.rows[0]);
+    if (event === 'call_ended' || event === 'call_analyzed') {
+      const status = mapRetellStatus(data.call_status);
+      const durationSec = data.duration_ms ? Math.round(data.duration_ms / 1000) : null;
+      const history = parseTranscript(data.transcript_object);
+
+      await pool.query(
+        `UPDATE supplier_calls
+         SET status = $1, duration = $2, conversation_history = $3, retell_call_id = $4, updated_at = NOW()
+         WHERE id = $5`,
+        [status, durationSec, JSON.stringify(history), data.call_id, recordId]
+      );
+
+      console.log(`[Retell Webhook] Call ${recordId} ended: status=${status}, duration=${durationSec}s, turns=${history.length}`);
+    }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('[Retell Webhook] Error:', err);
   }
+
+  res.status(200).send('OK');
 });
 
 // Preview script without making a call
@@ -471,12 +303,26 @@ router.post('/preview', async (req, res) => {
     );
     if (!itemRes.rows.length) return res.status(404).json({ error: 'Item not found' });
     const item = itemRes.rows[0];
-    const qty = quantity || Math.max(item.par_level - item.current_quantity, 1);
+    const qty = quantity || Math.max((item.par_level || 0) - (item.current_quantity || 0), 1);
     const script = await generateCallScript(item, {
       name: item.supplier_name,
       contact_person: item.contact_person,
     }, qty, language);
     res.json({ script, quantity: qty, item, language });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get a single call record
+router.get('/:id', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM supplier_calls WHERE id = $1',
+      [req.params.id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Not found' });
+    res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

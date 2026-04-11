@@ -53,8 +53,6 @@ app.listen(PORT, '0.0.0.0', () => {
   const publicUrl = process.env.PUBLIC_URL || '';
   const firstDomain = domains.split(' ')[0].trim();
   const resolvedUrl = firstDomain ? `https://${firstDomain}` : devDomain ? `https://${devDomain}` : publicUrl || 'http://localhost:3001';
-  console.error(`[Config] REPLIT_DOMAINS="${domains}"`);
-  console.error(`[Config] REPLIT_DEV_DOMAIN="${devDomain}"`);
-  console.error(`[Config] PUBLIC_URL="${publicUrl}"`);
-  console.error(`[Config] TwiML base URL will be: ${resolvedUrl}`);
+  console.log(`[Config] Public URL: ${resolvedUrl}`);
+  console.log(`[Config] Retell configured: ${!!(process.env.RETELL_API_KEY && process.env.RETELL_AGENT_ID && process.env.RETELL_PHONE_NUMBER)}`);
 });
